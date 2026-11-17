@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CheckSync</title>
+  <title>CheckSync — Club & School Attendance</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -20,44 +23,116 @@
       --text-muted: #646B5C;
       --card-bg: #FFFFFF;
       --bg-body: #FAF5F0;
+      --danger: #C84B31;
+      --warning-bg: #FFF3CD;
+      --warning-text: #856404;
     }
 
     * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
-    body { max-width: 680px; margin: 60px auto; padding: 0 24px; color: var(--text-dark); background: var(--bg-body); }
+    body { max-width: 780px; margin: 40px auto; padding: 0 20px 60px; color: var(--text-dark); background: var(--bg-body); }
     
-    h2 { font-weight: 800; font-size: 2rem; margin-bottom: 16px; color: var(--text-dark); letter-spacing: -0.5px; }
-    h3 { font-weight: 700; color: var(--text-dark); letter-spacing: -0.3px; }
-    .subtitle { color: var(--text-muted); font-size: 0.95rem; font-weight: 500; margin-top: 0; margin-bottom: 32px; line-height: 1.6; }
+    h2 { font-weight: 800; font-size: 1.9rem; margin-bottom: 10px; color: var(--text-dark); letter-spacing: -0.5px; }
+    h3 { font-weight: 700; color: var(--text-dark); letter-spacing: -0.3px; margin-top: 0; }
+    .subtitle { color: var(--text-muted); font-size: 0.94rem; font-weight: 500; margin-top: 0; margin-bottom: 24px; line-height: 1.55; }
     
-    .card { background: var(--card-bg); border: 1px solid var(--sand); border-radius: 16px; padding: 40px; margin-bottom: 32px; box-shadow: 0 4px 20px rgba(107, 112, 92, 0.06); }
+    .card { background: var(--card-bg); border: 1px solid var(--sand); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(107, 112, 92, 0.06); }
     
+    .portal-switcher {
+      display: flex;
+      background: var(--cream);
+      border: 1px solid var(--sand);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+    .portal-tab {
+      flex: 1;
+      padding: 11px 14px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .portal-tab.active {
+      background: var(--olive-dark);
+      color: #FFF;
+      box-shadow: 0 2px 6px rgba(107, 112, 92, 0.2);
+    }
+
+    .nav-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--cream);
+      padding-bottom: 12px;
+    }
+    .nav-tab {
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--sand);
+      background: var(--card-bg);
+      color: var(--text-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { background: var(--cream); }
+    .nav-tab.active { background: var(--terracotta); color: #FFF; border-color: var(--terracotta); }
+
     .upload-box { 
       border: 2px dashed var(--sage-light); 
       border-radius: 14px; 
-      padding: 32px 20px; 
+      padding: 28px 20px; 
       background: var(--cream); 
       transition: all 0.25s ease; 
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 12px;
+      text-align: center;
     }
     .upload-box:hover { border-color: var(--terracotta); background: #FFF1E6; }
     input[type="file"] { display: none; }
     
-    .btn { display: inline-block; background: var(--olive-dark); color: #FFF; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.95rem; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(107, 112, 92, 0.2); }
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--sage-light);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background: var(--bg-body);
+      color: var(--text-dark);
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--terracotta); border-color: transparent; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--olive-dark); color: #FFF; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.92rem; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(107, 112, 92, 0.2); }
     .btn:hover { background: var(--sage-mid); transform: translateY(-1px); }
+    .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 8px; }
     
-    .btn-secondary { background: var(--sage-light); color: var(--text-dark); padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: background 0.2s; }
+    .btn-secondary { background: var(--sage-light); color: var(--text-dark); padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.92rem; transition: background 0.2s; }
     .btn-secondary:hover { background: var(--sand); }
     
     .btn-email { background: var(--terracotta); color: #FFF; font-weight: 700; box-shadow: 0 2px 8px rgba(203, 153, 126, 0.3); }
     .btn-email:hover { background: #B8856A; }
-    
+
+    .btn-danger { background: #FDECEA; color: var(--danger); border: 1px solid #F5C2C7; box-shadow: none; }
+    .btn-danger:hover { background: #FADBD8; }
+
+    .link-btn { background: none; border: none; color: var(--terracotta); font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: underline; padding: 4px; }
+    .link-btn:hover { color: var(--olive-dark); }
+
     .filename { 
       color: var(--text-dark); 
-      font-size: 0.88rem; 
+      font-size: 0.86rem; 
       font-weight: 700; 
       background: var(--sand);
       padding: 6px 14px;
@@ -65,153 +140,446 @@
       word-break: break-all;
       max-width: 90%;
     }
-    .filename.empty {
-      background: transparent;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
+    .filename.empty { background: transparent; color: var(--text-muted); font-weight: 500; }
     
-    .stats-container { display: flex; gap: 14px; margin-top: 24px; }
-    .stat-card { flex: 1; background: var(--card-bg); border: 1px solid var(--sand); border-radius: 14px; padding: 16px; text-align: center; box-shadow: 0 2px 10px rgba(107, 112, 92, 0.04); }
-    .stat-value { font-size: 1.7rem; font-weight: 800; color: var(--text-dark); margin-top: 4px; }
-    .stat-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+    .stats-container { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 120px; background: var(--card-bg); border: 1px solid var(--sand); border-radius: 14px; padding: 14px; text-align: center; box-shadow: 0 2px 10px rgba(107, 112, 92, 0.04); }
+    .stat-value { font-size: 1.55rem; font-weight: 800; color: var(--text-dark); margin-top: 4px; }
+    .stat-label { font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
     
-    .results-header { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; }
-    .results-header h3 { margin: 0; font-size: 1.25rem; }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; flex-wrap: wrap; gap: 10px; }
+    .results-header h3 { margin: 0; font-size: 1.2rem; }
     
-    ul { list-style: none; padding: 0; margin-top: 14px; border: 1px solid var(--sand); border-radius: 14px; overflow: hidden; background: var(--card-bg); }
-    li { padding: 14px 18px; border-bottom: 1px solid var(--cream); font-size: 0.95rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-    li:last-child { border-bottom: none; }
-    
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(46, 51, 40, 0.5); backdrop-filter: blur(3px); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: var(--card-bg); width: 90%; max-width: 550px; border-radius: 18px; padding: 28px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 12px 32px rgba(0,0,0,0.15); border: 1px solid var(--sand); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--cream); padding-bottom: 14px; }
+    ul.clean-list { list-style: none; padding: 0; margin-top: 12px; border: 1px solid var(--sand); border-radius: 14px; overflow: hidden; background: var(--card-bg); }
+    ul.clean-list li { padding: 12px 16px; border-bottom: 1px solid var(--cream); font-size: 0.92rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    ul.clean-list li:last-child { border-bottom: none; }
+
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .badge-excused { background: #E2ECE9; color: #2D6A4F; }
+    .badge-strike { background: #FDECEA; color: var(--danger); }
+    .badge-ok { background: var(--cream); color: var(--olive-dark); }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(46, 51, 40, 0.55); backdrop-filter: blur(3px); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-content { background: var(--card-bg); width: 100%; max-width: 560px; border-radius: 18px; padding: 26px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 12px 32px rgba(0,0,0,0.18); border: 1px solid var(--sand); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--cream); padding-bottom: 12px; }
     .modal-header h3 { margin: 0; }
-    .modal-body { overflow-y: auto; flex: 1; margin-bottom: 18px; border: 1px solid var(--sand); border-radius: 10px; padding: 10px; background: var(--bg-body); }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; }
+    .modal-body { overflow-y: auto; flex: 1; margin-bottom: 16px; border: 1px solid var(--sand); border-radius: 10px; padding: 12px; background: var(--bg-body); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
     
     .checkbox-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--sand); cursor: pointer; border-radius: 8px; transition: background 0.15s; }
     .checkbox-item:hover { background: var(--cream); }
-    .checkbox-item input { margin-right: 14px; transform: scale(1.2); cursor: pointer; accent-color: var(--terracotta); }
+    .checkbox-item input { margin-right: 14px; transform: scale(1.2); cursor: pointer; accent-color: var(--terracotta); width: auto; }
     
-    footer { margin-top: 48px; text-align: center; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.3px; }
-    .auth-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: var(--cream); padding: 16px 20px; border-radius: 14px; border: 1px solid var(--sand); }
-    .auth-bar-actions { display: flex; align-items: center; gap: 14px; }
+    .auth-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--cream); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--sand); flex-wrap: wrap; gap: 10px; }
+    .auth-bar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .qr-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #FFF; border: 2px solid var(--sand); border-radius: 14px; margin: 16px auto; max-width: 300px; }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--sand); }
+    
+    .alert-banner { background: var(--warning-bg); color: var(--warning-text); border: 1px solid #FFEEBA; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 700; margin-bottom: 18px; }
+    .success-banner { background: #D8F3DC; color: #1B4332; border: 1px solid #B7E4C7; padding: 14px 18px; border-radius: 12px; font-size: 0.92rem; font-weight: 700; margin-top: 16px; text-align: center; }
+
+    footer { margin-top: 40px; text-align: center; font-size: 0.86rem; font-weight: 600; color: var(--text-muted); }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN / SIGN UP FORM -->
-  <div id="authSection" class="card" style="text-align: center;">
-    <h2>CheckSync</h2>
-    <p class="subtitle">Sign in or create an account to track your clubs attendance.</p>
-    
-    <div style="margin-bottom: 24px;">
-      <a href="https://docs.google.com/document/d/1vrwncAMn1HLO8yFFhBOTURXFofI_DFf9LS5V4J-DCQU/edit?usp=sharing" target="_blank" rel="noopener noreferrer" style="color: blue; text-decoration: underline; font-weight: 600; font-size: 0.95rem;">Reference this guide for first–time use</a>
-    </div>
-
-    <form id="authForm" onsubmit="return false;" style="max-width: 360px; margin: 0 auto;">
-      <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 24px; margin-bottom: 28px;">
-        <input type="email" id="authEmail" name="username" placeholder="Email address" autocomplete="username" required style="padding: 14px 16px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 0.95rem; font-weight: 600; background: var(--bg-body);">
-        <input type="password" id="authPassword" name="password" placeholder="Password" autocomplete="current-password" required style="padding: 14px 16px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 0.95rem; font-weight: 600; background: var(--bg-body);">
-      </div>
-
-      <div style="display: flex; gap: 20px; justify-content: center;">
-        <button type="submit" class="btn" id="loginBtn" style="padding: 14px 28px;">Log In</button>
-        <button type="button" class="btn btn-secondary" id="signupBtn" style="padding: 14px 28px;">Sign Up</button>
-      </div>
-    </form>
-
-    <div id="authError" style="color: #d93025; font-size: 0.88rem; margin-top: 16px; font-weight: 700;"></div>
+  <!-- TOP PORTAL SWITCHER -->
+  <div class="portal-switcher" id="portalSwitcher">
+    <button type="button" class="portal-tab active" id="switchStaffBtn">Advisor &amp; Officer Portal</button>
+    <button type="button" class="portal-tab" id="switchStudentBtn">Student QR Check-In</button>
   </div>
 
-  <!-- ONBOARDING STEP -->
-  <div id="onboardingSection" class="card" style="display: none; text-align: center;">
-    <h2>Welcome! Setup Full Club List</h2>
-    <p class="subtitle">Upload your CSV file containing member emails (e.g. <code>first.last@vhhscougars.org</code>). This creates your full club list that includes an email list saved to your account.</p>
-    
-    <div class="upload-box" style="margin-top: 16px;">
-      <label for="initialRosterInput" class="btn">Upload Full Club List CSV</label>
-      <input type="file" id="initialRosterInput" accept=".csv">
-      <div id="initialRosterName" class="filename empty">No file selected</div>
+  <!-- ========================================================= -->
+  <!-- PORTAL 1: STAFF / ADVISOR PORTAL                          -->
+  <!-- ========================================================= -->
+  <div id="staffPortal">
+
+    <!-- STEP 1: CLEAN LOGIN VIEW (ONLY EMAIL & PASSWORD) -->
+    <div id="staffLoginCard" class="card" style="text-align: center;">
+      <h2>CheckSync</h2>
+      <p class="subtitle">Sign in to manage your club's attendance, rosters, and QR check-ins.</p>
+
+      <form id="staffLoginForm" style="max-width: 360px; margin: 0 auto; text-align: left;">
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+          <input type="email" id="loginEmail" placeholder="Email address" autocomplete="username" required>
+          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">Log In</button>
+      </form>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--cream);">
+        <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">New to CheckSync?</span><br>
+        <button type="button" class="btn btn-secondary" id="goToStaffSignupBtn" style="margin-top: 10px;">First-Time Sign Up</button>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <a href="https://docs.google.com/document/d/1vrwncAMn1HLO8yFFhBOTURXFofI_DFf9LS5V4J-DCQU/edit?usp=sharing" target="_blank" rel="noopener noreferrer" style="color: var(--olive-dark); text-decoration: underline; font-weight: 700; font-size: 0.85rem;">Reference guide for first–time use</a>
+      </div>
+
+      <div id="staffLoginError" style="color: var(--danger); font-size: 0.88rem; margin-top: 14px; font-weight: 700;"></div>
+    </div>
+
+    <!-- STEP 2: FIRST-TIME STAFF SIGN-UP WIZARD (ALL INFO + ROSTER) -->
+    <div id="staffSignupCard" class="card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2 style="margin: 0;">First-Time Club Setup</h2>
+        <button type="button" class="link-btn" id="backToStaffLoginBtn">← Back to Log In</button>
+      </div>
+      <p class="subtitle">Create your club account and set up your member roster via spreadsheet or manual entry.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Club Name *</label>
+            <input type="text" id="signupClubName" placeholder="e.g. Robotics Club" required>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Advisor / Officer Name *</label>
+            <input type="text" id="signupAdvisorName" placeholder="e.g. Ms. Alvarez" required>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Account Email *</label>
+            <input type="email" id="signupEmail" placeholder="advisor@school.org" required>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Create Password (min 6 chars) *</label>
+            <input type="password" id="signupPassword" placeholder="••••••••" required>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom: 8px;">Initial Club Roster</h3>
+      <p class="subtitle" style="margin-bottom: 14px;">Choose how you want to add your club members right now:</p>
+
+      <div class="portal-switcher" style="margin-bottom: 18px;">
+        <button type="button" class="portal-tab active" id="signupTabUpload">Upload Spreadsheet (.CSV / .XLSX)</button>
+        <button type="button" class="portal-tab" id="signupTabManual">Type Roster Manually</button>
+      </div>
+
+      <!-- Option A: Spreadsheet Upload at Sign-Up -->
+      <div id="signupUploadPane">
+        <div class="upload-box">
+          <label for="signupRosterFile" class="btn">Choose CSV or Excel File</label>
+          <input type="file" id="signupRosterFile" accept=".csv,.xlsx,.xls">
+          <div id="signupRosterFileName" class="filename empty">No file selected</div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Supports .csv, .xlsx, and .xls files with student emails</span>
+        </div>
+      </div>
+
+      <!-- Option B: Manual Roster Entry at Sign-Up -->
+      <div id="signupManualPane" style="display: none;">
+        <div id="signupManualRows" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;"></div>
+        <button type="button" class="btn btn-secondary btn-sm" id="signupAddRowBtn">+ Add Another Student</button>
+      </div>
+
+      <div style="margin-top: 24px; text-align: right;">
+        <button type="button" class="btn" id="completeStaffSignupBtn" style="width: 100%; padding: 14px;">Create Account &amp; Launch Dashboard</button>
+      </div>
+
+      <div id="staffSignupError" style="color: var(--danger); font-size: 0.88rem; margin-top: 14px; font-weight: 700; text-align: center;"></div>
+    </div>
+
+    <!-- STEP 3: MAIN ADVISOR DASHBOARD -->
+    <div id="appDashboard" style="display: none;">
+      <div class="auth-bar">
+        <div>
+          <span id="clubTitleDisplay" style="font-weight: 800; display: block; font-size: 1.05rem; color: var(--text-dark);"></span>
+          <span id="userGreeting" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;"></span>
+          <span id="rosterCount" style="font-size: 0.82rem; color: var(--olive-dark); font-weight: 700; display: block; margin-top: 2px;"></span>
+        </div>
+        <div class="auth-bar-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="logoutBtn">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD NAVIGATION TABS -->
+      <div class="nav-tabs">
+        <button type="button" class="nav-tab active" data-tab="tabAttendance">Attendance Check</button>
+        <button type="button" class="nav-tab" data-tab="tabQrHost">Live QR Meeting</button>
+        <button type="button" class="nav-tab" data-tab="tabRoster">Manage Roster</button>
+        <button type="button" class="nav-tab" data-tab="tabHistory">History &amp; Reports</button>
+        <button type="button" class="nav-tab" data-tab="tabSettings">Email &amp; Settings</button>
+      </div>
+
+      <!-- TAB 1: DAILY ATTENDANCE CHECK -->
+      <div id="tabAttendance" class="dashboard-pane">
+        <div class="card">
+          <h3>Daily Attendance Check</h3>
+          <p class="subtitle" style="margin-bottom: 16px;">Upload a 5-Star Students meeting CSV/Excel export, or sync live QR check-ins from today's session.</p>
+          
+          <div class="upload-box">
+            <label for="csvFileInput" class="btn">Choose 5-Star Spreadsheet (.csv, .xlsx)</label>
+            <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls">
+            <div id="fileName" class="filename empty">No file selected</div>
+          </div>
+
+          <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Running a QR check-in meeting today?</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="loadLiveQrBtn">Sync Today's QR Scans</button>
+          </div>
+        </div>
+
+        <div id="chronicAlertBanner" class="alert-banner" style="display: none;"></div>
+
+        <div class="stats-container" id="statsSection" style="display: none;">
+          <div class="stat-card">
+            <div class="stat-label">Present</div>
+            <div class="stat-value" id="statPresent" style="color: var(--olive-dark);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Excused</div>
+            <div class="stat-value" id="statExcused" style="color: #2D6A4F;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unexcused</div>
+            <div class="stat-value" id="statMissing" style="color: var(--terracotta);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Rate</div>
+            <div class="stat-value" id="statRate" style="color: var(--text-dark);">0%</div>
+          </div>
+        </div>
+
+        <div class="results-header" id="resultsHeader" style="display: none;">
+          <h3>Missing Members (<span id="count">0</span>)</h3>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" id="saveSessionBtn">Save to History</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="exportReportBtn">Export CSV Report</button>
+            <button type="button" class="btn btn-email btn-sm" id="openEmailModalBtn">Email Missing</button>
+          </div>
+        </div>
+        
+        <ul id="results" class="clean-list" style="display: none;"></ul>
+      </div>
+
+      <!-- TAB 2: LIVE QR CODE MEETING HOST -->
+      <div id="tabQrHost" class="dashboard-pane" style="display: none;">
+        <div class="card" style="text-align: center;">
+          <h3>Project Meeting QR Code</h3>
+          <p class="subtitle">Display this QR code on your classroom screen. Students can scan it with their phone's <strong>default Camera app</strong> or inside the <strong>Student QR Check-In</strong> tab.</p>
+          
+          <div style="max-width: 340px; margin: 0 auto 14px;">
+            <input type="text" id="meetingTitleInput" placeholder="Meeting Label (e.g. Nov 17 General Meeting)">
+          </div>
+
+          <button type="button" class="btn" id="startQrSessionBtn">Generate Today's QR Code</button>
+
+          <div id="qrDisplayArea" style="display: none; margin-top: 20px;">
+            <div class="qr-box" id="qrcodeContainer"></div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--olive-dark); margin-bottom: 6px;">
+              Session Code: <span id="qrSessionCodeText" style="font-family: monospace; font-size: 1.05rem;"></span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+              Direct Link: <a id="qrDirectLink" href="#" target="_blank" style="color: var(--terracotta); word-break: break-all;"></a>
+            </div>
+            
+            <div style="text-align: left; margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0;">Live Checked-In Students (<span id="liveScanCount">0</span>)</h4>
+                <button type="button" class="btn btn-secondary btn-sm" id="refreshLiveScansBtn">Refresh List</button>
+              </div>
+              <ul id="liveScansList" class="clean-list"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: INTERACTIVE ROSTER MANAGEMENT -->
+      <div id="tabRoster" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+            <div>
+              <h3 style="margin-bottom: 4px;">Club Roster Editor</h3>
+              <p class="subtitle" style="margin: 0;">Add individual students, mark excused absences, or import a replacement spreadsheet.</p>
+            </div>
+            <label for="updateRosterInput" class="btn btn-secondary btn-sm" style="cursor: pointer;">Import CSV / Excel</label>
+            <input type="file" id="updateRosterInput" accept=".csv,.xlsx,.xls">
+          </div>
+
+          <div class="grid-2" style="background: var(--cream); padding: 14px; border-radius: 12px; margin-bottom: 18px;">
+            <input type="text" id="newMemberName" placeholder="Full Name (e.g. Maya Lin)">
+            <div style="display: flex; gap: 8px;">
+              <input type="email" id="newMemberEmail" placeholder="Student Email">
+              <button type="button" class="btn btn-sm" id="addSingleMemberBtn">Add</button>
+            </div>
+          </div>
+
+          <input type="text" id="rosterSearchInput" placeholder="Search roster by name or email..." style="margin-bottom: 12px;">
+          <ul id="rosterEditorList" class="clean-list"></ul>
+        </div>
+      </div>
+
+      <!-- TAB 4: ATTENDANCE HISTORY & REPORTS -->
+      <div id="tabHistory" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <h3 style="margin-bottom: 4px;">Saved Meeting Logs &amp; Standing</h3>
+              <p class="subtitle" style="margin: 0;">Audit trail for school administrators and automatic chronic-absence flagging.</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="exportFullAuditBtn">Download Full Semester CSV</button>
+          </div>
+
+          <h4 style="margin-top: 20px; margin-bottom: 8px;">Member Attendance Standing</h4>
+          <ul id="memberStandingList" class="clean-list"></ul>
+
+          <h4 style="margin-top: 24px; margin-bottom: 8px;">Past Saved Sessions</h4>
+          <ul id="sessionHistoryList" class="clean-list"></ul>
+        </div>
+      </div>
+
+      <!-- TAB 5: CUSTOM EMAIL & FERPA SETTINGS -->
+      <div id="tabSettings" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <h3>Custom Email Prompt / Template</h3>
+          <p class="subtitle">Customize the message opened in Gmail when emailing missing students. Tags: <code>{ClubName}</code>, <code>{Date}</code>, <code>{AdvisorName}</code></p>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Club Name</label>
+              <input type="text" id="settingsClubName" placeholder="e.g. Varsity Debate Club">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Advisor / Sender Name</label>
+              <input type="text" id="settingsAdvisorName" placeholder="e.g. Mr. Thompson">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Email Subject</label>
+              <input type="text" id="settingsEmailSubject" placeholder="Missing {ClubName} Meeting - {Date}">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Email Body</label>
+              <textarea id="settingsEmailBody" rows="5"></textarea>
+            </div>
+            <button type="button" class="btn" id="saveEmailSettingsBtn" style="align-self: flex-start;">Save Email Template</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Co-Advisors &amp; FERPA Data Controls</h3>
+          <p class="subtitle">Share club access with co-advisors or wipe student data at the end of the school year.</p>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+            <input type="email" id="coAdvisorEmailInput" placeholder="Co-advisor or Officer email">
+            <button type="button" class="btn btn-secondary btn-sm" id="addCoAdvisorBtn">Authorize</button>
+          </div>
+          <div id="coAdvisorList" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; font-weight: 600;"></div>
+
+          <hr style="border: none; border-top: 1px solid var(--cream); margin: 20px 0;">
+          <button type="button" class="btn btn-danger btn-sm" id="ferpaResetBtn">FERPA End-of-Year Wipe (Delete Roster &amp; Logs)</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- MAIN APP DASHBOARD -->
-  <div id="appDashboard" style="display: none;">
-    <div class="auth-bar">
-      <div>
-        <span id="userGreeting" style="font-weight: 700; display: block; font-size: 0.95rem;"></span>
-        <span id="rosterCount" style="font-size: 0.85rem; color: var(--olive-dark); font-weight: 700;"></span>
-      </div>
-      <div class="auth-bar-actions">
-        <label for="updateRosterInput" style="font-size: 0.85rem; color: var(--terracotta); cursor: pointer; text-decoration: underline; font-weight: 700;">Update Full Club List</label>
-        <input type="file" id="updateRosterInput" accept=".csv">
-        <button class="btn btn-secondary" id="logoutBtn" style="padding: 8px 14px; font-size: 0.85rem;">Sign Out</button>
-      </div>
-    </div>
+  <!-- ========================================================= -->
+  <!-- PORTAL 2: STUDENT QR CHECK-IN PORTAL                      -->
+  <!-- ========================================================= -->
+  <div id="studentPortal" style="display: none;">
+    <div class="card" style="text-align: center;">
+      <h2>Student QR Check-In</h2>
+      <p class="subtitle">Sign in to your student account, then scan your club's QR code using your phone camera or the scanner below.</p>
 
-    <!-- DAILY ATTENDANCE CHECKER -->
-    <div class="card">
-      <h3 style="margin-top:0;">Daily Attendance Check</h3>
-      <p class="subtitle" style="margin-bottom: 18px;">Upload a 5-Star Students meeting or event CSV export.</p>
-      <div class="upload-box">
-        <label for="csvFileInput" class="btn">Choose 5-Star CSV File</label>
-        <input type="file" id="csvFileInput" accept=".csv">
-        <div id="fileName" class="filename empty">No file selected</div>
-      </div>
-    </div>
+      <!-- Student Login Box (Clean Email & Password First) -->
+      <div id="studentLoginBox" style="max-width: 360px; margin: 0 auto; text-align: left;">
+        <form id="studentLoginForm">
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+            <input type="email" id="studentLoginEmail" placeholder="School Email" required>
+            <input type="password" id="studentLoginPassword" placeholder="Password" required>
+          </div>
+          <button type="submit" class="btn" style="width: 100%;">Student Log In</button>
+        </form>
 
-    <div class="stats-container" id="statsSection" style="display: none;">
-      <div class="stat-card">
-        <div class="stat-label">Present</div>
-        <div class="stat-value" id="statPresent" style="color: var(--olive-dark);">0</div>
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--cream); text-align: center;">
+          <span style="font-size: 0.86rem; color: var(--text-muted); font-weight: 600;">Don't have a student account yet?</span><br>
+          <button type="button" class="btn btn-secondary btn-sm" id="goToStudentSignupBtn" style="margin-top: 8px;">First-Time Student Sign Up</button>
+        </div>
+        <div id="studentLoginError" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-top: 12px; text-align: center;"></div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Missing</div>
-        <div class="stat-value" id="statMissing" style="color: var(--terracotta);">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Attendance Rate</div>
-        <div class="stat-value" id="statRate" style="color: var(--text-dark);">0%</div>
-      </div>
-    </div>
 
-    <div class="results-header" id="resultsHeader" style="display: none;">
-      <h3>Missing Members (<span id="count">0</span>)</h3>
-      <button class="btn btn-email" id="openEmailModalBtn">Email Missing Members</button>
+      <!-- Student First-Time Sign-Up Box -->
+      <div id="studentSignupBox" style="display: none; max-width: 360px; margin: 0 auto; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <strong style="font-size: 1rem;">Create Student Account</strong>
+          <button type="button" class="link-btn" id="backToStudentLoginBtn">← Back to Log In</button>
+        </div>
+        <form id="studentSignupForm">
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+            <input type="text" id="studentSignupName" placeholder="Full Name (e.g. Jordan Patel)" required>
+            <input type="email" id="studentSignupEmail" placeholder="School Email (e.g. jordan.patel@school.org)" required>
+            <input type="password" id="studentSignupPassword" placeholder="Create Password (min 6 chars)" required>
+          </div>
+          <button type="submit" class="btn" style="width: 100%;">Create Account &amp; Continue</button>
+        </form>
+        <div id="studentSignupError" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-top: 12px; text-align: center;"></div>
+      </div>
+
+      <!-- Student Logged-In Scanner Box -->
+      <div id="studentScannerBox" style="display: none;">
+        <div class="auth-bar" style="text-align: left;">
+          <div>
+            <strong id="studentGreeting" style="display: block; font-size: 0.95rem;"></strong>
+            <span id="studentEmailDisplay" style="font-size: 0.82rem; color: var(--text-muted);"></span>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="studentLogoutBtn">Sign Out</button>
+        </div>
+
+        <div id="autoCheckInBanner" class="success-banner" style="display: none;"></div>
+
+        <div style="margin: 18px 0;">
+          <button type="button" class="btn" id="startCameraScanBtn">Open Browser QR Scanner</button>
+          <button type="button" class="btn btn-secondary" id="stopCameraScanBtn" style="display: none;">Stop Camera</button>
+        </div>
+
+        <div id="reader" style="max-width: 400px; margin: 0 auto;"></div>
+
+        <div style="max-width: 380px; margin: 24px auto 0; padding-top: 18px; border-top: 1px solid var(--cream);">
+          <p style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px;">Camera unavailable? Enter the 6-character Session Code:</p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="manualSessionCodeInput" placeholder="e.g. ABC123" style="text-transform: uppercase;">
+            <button type="button" class="btn btn-sm" id="manualCodeCheckInBtn">Check In</button>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <ul id="results"></ul>
   </div>
 
   <!-- EMAIL MODAL -->
   <div class="modal-overlay" id="emailModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Select Members to Email</h3>
-        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Uncheck anyone present or excused</span>
+        <h3>Review &amp; Email Missing Members</h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Excused members are unchecked automatically</span>
       </div>
       <div class="modal-body" id="modalChecklist"></div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Message Preview (Editable before sending):</label>
+        <textarea id="modalEmailPreview" rows="4" style="margin-top: 4px; font-size: 0.85rem;"></textarea>
+      </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="closeModalBtn">Cancel</button>
-        <button class="btn btn-email" id="sendEmailBtn">Open in Gmail</button>
+        <button type="button" class="btn btn-secondary" id="closeModalBtn">Cancel</button>
+        <button type="button" class="btn btn-email" id="sendEmailBtn">Open in Gmail (BCC)</button>
       </div>
     </div>
   </div>
 
-  <footer>Created By Yahli</footer>
+  <footer>CheckSync • School &amp; Club Attendance Suite</footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
-      getAuth, 
-      createUserWithEmailAndPassword, 
-      signInWithEmailAndPassword, 
-      signOut, 
-      onAuthStateChanged 
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+      getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBkeNN18CV1FnPgRscYsffB7PwxUTq0qao",
@@ -226,10 +594,139 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let masterList = [];
-    let currentMissingMembers = [];
+    // Global State
     let currentUser = null;
+    let portalMode = 'staff'; // 'staff' or 'student'
+    let signupRosterMode = 'upload'; // 'upload' or 'manual'
+    let pendingUploadedRoster = [];
+    let isSigningUpNow = false;
 
+    let clubData = {
+      clubName: 'My Club',
+      advisorName: 'Club Advisor',
+      members: [],
+      sessions: [],
+      coAdvisors: [],
+      emailTemplate: {
+        subject: 'Missing {ClubName} Meeting ({Date})',
+        body: 'Hi,
+
+Our records show that you missed today's {ClubName} meeting on {Date}. Please reply if you had an excused absence.
+
+Best,
+{AdvisorName}'
+      }
+    };
+    let currentMissingMembers = [];
+    let currentPresentEmails = [];
+    let activeQrSessionCode = null;
+    let html5QrCode = null;
+
+    // =========================================================
+    // 1. PORTAL SWITCHING (STAFF VS STUDENT) — GUARANTEED WORKING
+    // =========================================================
+    function switchPortal(mode) {
+      portalMode = mode;
+      const staffBtn = document.getElementById('switchStaffBtn');
+      const studentBtn = document.getElementById('switchStudentBtn');
+      const staffDiv = document.getElementById('staffPortal');
+      const studentDiv = document.getElementById('studentPortal');
+
+      if (mode === 'student') {
+        studentBtn.classList.add('active');
+        staffBtn.classList.remove('active');
+        studentDiv.style.display = 'block';
+        staffDiv.style.display = 'none';
+      } else {
+        staffBtn.classList.add('active');
+        studentBtn.classList.remove('active');
+        staffDiv.style.display = 'block';
+        studentDiv.style.display = 'none';
+        if (html5QrCode) stopStudentScanner();
+      }
+    }
+
+    document.getElementById('switchStaffBtn').addEventListener('click', () => switchPortal('staff'));
+    document.getElementById('switchStudentBtn').addEventListener('click', () => switchPortal('student'));
+
+    // Check URL query param for direct phone camera QR scan (?checkin=CODE)
+    const urlParams = new URLSearchParams(window.location.search);
+    const pendingQrCodeFromUrl = urlParams.get('checkin');
+    if (pendingQrCodeFromUrl) {
+      switchPortal('student');
+      document.getElementById('manualSessionCodeInput').value = pendingQrCodeFromUrl.toUpperCase();
+    }
+
+    // =========================================================
+    // 2. LOGIN <-> FIRST-TIME SIGN-UP VIEW TOGGLES
+    // =========================================================
+    // Staff toggles
+    document.getElementById('goToStaffSignupBtn').addEventListener('click', () => {
+      document.getElementById('staffLoginCard').style.display = 'none';
+      document.getElementById('staffSignupCard').style.display = 'block';
+      document.getElementById('staffLoginError').textContent = '';
+      if (document.getElementById('signupManualRows').children.length === 0) {
+        addSignupManualRow();
+        addSignupManualRow();
+        addSignupManualRow();
+      }
+    });
+
+    document.getElementById('backToStaffLoginBtn').addEventListener('click', () => {
+      document.getElementById('staffSignupCard').style.display = 'none';
+      document.getElementById('staffLoginCard').style.display = 'block';
+      document.getElementById('staffSignupError').textContent = '';
+    });
+
+    // Student toggles
+    document.getElementById('goToStudentSignupBtn').addEventListener('click', () => {
+      document.getElementById('studentLoginBox').style.display = 'none';
+      document.getElementById('studentSignupBox').style.display = 'block';
+      document.getElementById('studentLoginError').textContent = '';
+    });
+
+    document.getElementById('backToStudentLoginBtn').addEventListener('click', () => {
+      document.getElementById('studentSignupBox').style.display = 'none';
+      document.getElementById('studentLoginBox').style.display = 'block';
+      document.getElementById('studentSignupError').textContent = '';
+    });
+
+    // Staff Sign-Up Roster Method Switcher (Upload vs Manual)
+    document.getElementById('signupTabUpload').addEventListener('click', () => {
+      signupRosterMode = 'upload';
+      document.getElementById('signupTabUpload').classList.add('active');
+      document.getElementById('signupTabManual').classList.remove('active');
+      document.getElementById('signupUploadPane').style.display = 'block';
+      document.getElementById('signupManualPane').style.display = 'none';
+    });
+
+    document.getElementById('signupTabManual').addEventListener('click', () => {
+      signupRosterMode = 'manual';
+      document.getElementById('signupTabManual').classList.add('active');
+      document.getElementById('signupTabUpload').classList.remove('active');
+      document.getElementById('signupManualPane').style.display = 'block';
+      document.getElementById('signupUploadPane').style.display = 'none';
+    });
+
+    function addSignupManualRow() {
+      const container = document.getElementById('signupManualRows');
+      const row = document.createElement('div');
+      row.className = 'grid-2 signup-manual-row';
+      row.innerHTML = `
+        <input type="text" class="sm-name" placeholder="Student Full Name (e.g. Alex Rivera)">
+        <div style="display: flex; gap: 6px;">
+          <input type="email" class="sm-email" placeholder="Student Email (alex.rivera@school.org)">
+          <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.signup-manual-row').remove()">✕</button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    document.getElementById('signupAddRowBtn').addEventListener('click', addSignupManualRow);
+
+    // =========================================================
+    // 3. HELPERS: NAME & SPREADSHEET PARSING (.CSV & .XLSX)
+    // =========================================================
     function capitalizeWord(str) {
       if (!str) return '';
       return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -237,27 +734,89 @@
 
     function capitalizeName(str) {
       if (!str) return '';
-      return str.split(' ').map(capitalizeWord).join(' ');
+      return str.split(/\s+/).map(capitalizeWord).join(' ');
     }
 
-    function parseEmailToMember(emailStr) {
+    function parseEmailToMember(emailStr, explicitName = '') {
       const cleanEmail = emailStr.trim().toLowerCase();
+      if (explicitName) {
+        const parts = explicitName.trim().split(/\s+/);
+        const first = capitalizeName(parts[0] || '');
+        const last = capitalizeName(parts.slice(1).join(' ') || '');
+        return { email: cleanEmail, first, last, name: capitalizeName(explicitName), excused: false };
+      }
       const username = cleanEmail.split('@')[0];
       const parts = username.split('.');
-      
-      const rawFirst = parts[0] || '';
-      const rawLast = parts.slice(1).join(' ') || '';
-
-      const first = capitalizeName(rawFirst);
-      const last = capitalizeName(rawLast);
+      const first = capitalizeName(parts[0] || '');
+      const last = capitalizeName(parts.slice(1).join(' ') || '');
       const fullName = `${first} ${last}`.trim() || cleanEmail;
+      return { email: cleanEmail, first, last, name: fullName, excused: false };
+    }
 
-      return {
-        email: cleanEmail,
-        first: first,
-        last: last,
-        name: fullName
-      };
+    function parseSpreadsheetFile(file, callback) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'xlsx' || ext === 'xls') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          callback(rows);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        Papa.parse(file, {
+          header: false,
+          skipEmptyLines: true,
+          complete: (results) => callback(results.data)
+        });
+      }
+    }
+
+    function extractMembersFromRows(rows) {
+      const parsedMembers = [];
+      const seenEmails = new Set();
+      rows.forEach(row => {
+        const cells = Array.isArray(row) ? row : Object.values(row);
+        const rowText = cells.join(' ');
+        const emailMatch = rowText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) {
+          const email = emailMatch[0].toLowerCase();
+          if (!seenEmails.has(email)) {
+            seenEmails.add(email);
+            const nameCell = cells.find(c => typeof c === 'string' && !c.includes('@') && c.trim().split(/\s+/).length >= 2);
+            parsedMembers.push(parseEmailToMember(email, nameCell || ''));
+          }
+        }
+      });
+      return parsedMembers;
+    }
+
+    // Handle file selection during First-Time Sign Up
+    document.getElementById('signupRosterFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const nameElem = document.getElementById('signupRosterFileName');
+      nameElem.textContent = file.name;
+      nameElem.classList.remove('empty');
+
+      parseSpreadsheetFile(file, (rows) => {
+        pendingUploadedRoster = extractMembersFromRows(rows);
+        if (pendingUploadedRoster.length === 0) {
+          alert('No valid student emails were found in that spreadsheet.');
+        } else {
+          nameElem.textContent = `${file.name} (${pendingUploadedRoster.length} members ready)`;
+        }
+      });
+    });
+
+    async function saveClubDataToFirestore() {
+      if (!currentUser) return;
+      await setDoc(doc(db, "clubs", currentUser.uid), {
+        ...clubData,
+        updatedAt: new Date().toISOString()
+      });
     }
 
     function formatAuthError(errorCode) {
@@ -265,221 +824,329 @@
         case 'auth/invalid-credential':
         case 'auth/user-not-found':
         case 'auth/wrong-password':
-          return 'Incorrect email or password. Please check your credentials.';
+          return 'Incorrect email or password.';
         case 'auth/email-already-in-use':
-          return 'An account with this email address already exists. Please log in.';
+          return 'An account with this email already exists. Please log in.';
         case 'auth/weak-password':
           return 'Password must be at least 6 characters long.';
         case 'auth/invalid-email':
           return 'Please enter a valid email address.';
         default:
-          return 'Authentication error. Please check your details and try again.';
+          return 'Error: ' + errorCode;
       }
     }
 
-    function clearAttendanceResults() {
-      const fileElem = document.getElementById('fileName');
-      fileElem.textContent = 'No file selected';
-      fileElem.classList.add('empty');
-      
-      document.getElementById('statsSection').style.display = 'none';
-      document.getElementById('resultsHeader').style.display = 'none';
-      document.getElementById('results').innerHTML = '';
-      document.getElementById('csvFileInput').value = '';
-      currentMissingMembers = [];
-    }
-
+    // =========================================================
+    // 4. AUTH STATE & LOGIN / SIGN-UP HANDLERS
+    // =========================================================
     onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (isSigningUpNow) return; // Wait until sign-up finishes writing Firestore doc
+
       if (user) {
-        currentUser = user;
-        document.getElementById('authSection').style.display = 'none';
-        
-        const snap = await getDoc(doc(db, "clubs", user.uid));
-        if (snap.exists() && snap.data().members && snap.data().members.length > 0) {
-          masterList = snap.data().members;
-          showDashboard(user.email);
-        } else {
-          document.getElementById('onboardingSection').style.display = 'block';
-          document.getElementById('appDashboard').style.display = 'none';
+        // Update Student Portal Logged-In View
+        document.getElementById('studentLoginBox').style.display = 'none';
+        document.getElementById('studentSignupBox').style.display = 'none';
+        document.getElementById('studentScannerBox').style.display = 'block';
+        document.getElementById('studentGreeting').textContent = user.displayName || user.email.split('@')[0];
+        document.getElementById('studentEmailDisplay').textContent = user.email;
+
+        if (pendingQrCodeFromUrl) {
+          await processStudentQrCheckIn(pendingQrCodeFromUrl);
         }
+
+        // Update Staff Portal Logged-In View
+        document.getElementById('staffLoginCard').style.display = 'none';
+        document.getElementById('staffSignupCard').style.display = 'none';
+
+        const snap = await getDoc(doc(db, "clubs", user.uid));
+        if (snap.exists()) {
+          clubData = { ...clubData, ...snap.data() };
+        }
+        showDashboard(user.email);
       } else {
-        currentUser = null;
-        masterList = [];
-        clearAttendanceResults();
-        document.getElementById('authSection').style.display = 'block';
-        document.getElementById('onboardingSection').style.display = 'none';
+        // Signed Out State
+        document.getElementById('staffLoginCard').style.display = 'block';
+        document.getElementById('staffSignupCard').style.display = 'none';
         document.getElementById('appDashboard').style.display = 'none';
+
+        document.getElementById('studentLoginBox').style.display = 'block';
+        document.getElementById('studentSignupBox').style.display = 'none';
+        document.getElementById('studentScannerBox').style.display = 'none';
       }
     });
 
-    function showDashboard(email) {
-      document.getElementById('onboardingSection').style.display = 'none';
-      document.getElementById('appDashboard').style.display = 'block';
-      document.getElementById('userGreeting').textContent = `Account: ${email}`;
-      document.getElementById('rosterCount').textContent = `Full Club List: ${masterList.length} members loaded`;
-      clearAttendanceResults();
-    }
-
-    document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    document.getElementById('authForm').addEventListener('submit', (e) => {
+    // Staff Log In
+    document.getElementById('staffLoginForm').addEventListener('submit', (e) => {
       e.preventDefault();
-      handleLogin();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      document.getElementById('staffLoginError').textContent = '';
+      signInWithEmailAndPassword(auth, email, password).catch(err => {
+        document.getElementById('staffLoginError').textContent = formatAuthError(err.code);
+      });
     });
 
-    function handleLogin() {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-      document.getElementById('authError').textContent = '';
+    // Staff First-Time Sign Up (All info + Spreadsheet or Manual Roster)
+    document.getElementById('completeStaffSignupBtn').addEventListener('click', async () => {
+      const clubName = document.getElementById('signupClubName').value.trim();
+      const advisorName = document.getElementById('signupAdvisorName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const errBox = document.getElementById('staffSignupError');
+      errBox.textContent = '';
 
-      if (!email || !password) {
-        document.getElementById('authError').textContent = 'Please enter both email and password.';
+      if (!clubName || !advisorName || !email || !password) {
+        errBox.textContent = 'Please fill out Club Name, Advisor Name, Email, and Password.';
         return;
       }
 
-      signInWithEmailAndPassword(auth, email, password).catch((error) => {
-        document.getElementById('authError').textContent = formatAuthError(error.code);
-      });
-    }
-
-    document.getElementById('signupBtn').addEventListener('click', () => {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-      document.getElementById('authError').textContent = '';
-
-      if (!email || !password) {
-        document.getElementById('authError').textContent = 'Please enter both email and password.';
-        return;
+      let initialMembers = [];
+      if (signupRosterMode === 'upload') {
+        if (pendingUploadedRoster.length === 0) {
+          errBox.textContent = 'Please upload a CSV/Excel roster file or switch to "Type Roster Manually".';
+          return;
+        }
+        initialMembers = pendingUploadedRoster;
+      } else {
+        const rows = document.querySelectorAll('.signup-manual-row');
+        rows.forEach(r => {
+          const n = r.querySelector('.sm-name').value.trim();
+          const em = r.querySelector('.sm-email').value.trim().toLowerCase();
+          if (em && em.includes('@')) {
+            initialMembers.push(parseEmailToMember(em, n));
+          }
+        });
+        if (initialMembers.length === 0) {
+          errBox.textContent = 'Please enter at least one valid student email in the manual roster.';
+          return;
+        }
       }
 
-      createUserWithEmailAndPassword(auth, email, password).catch((error) => {
-        document.getElementById('authError').textContent = formatAuthError(error.code);
-      });
+      try {
+        isSigningUpNow = true;
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: advisorName });
+        
+        clubData.clubName = clubName;
+        clubData.advisorName = advisorName;
+        clubData.members = initialMembers;
+        clubData.sessions = [];
+        clubData.coAdvisors = [];
+
+        await setDoc(doc(db, "clubs", cred.user.uid), {
+          ...clubData,
+          updatedAt: new Date().toISOString()
+        });
+
+        isSigningUpNow = false;
+        currentUser = cred.user;
+        document.getElementById('staffSignupCard').style.display = 'none';
+        showDashboard(cred.user.email);
+      } catch (err) {
+        isSigningUpNow = false;
+        errBox.textContent = formatAuthError(err.code);
+      }
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
-    function processAndSaveRoster(file, onSuccess) {
-      Papa.parse(file, {
-        header: false,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          const parsedMembers = [];
-          
-          results.data.forEach(row => {
-            const rowText = Array.isArray(row) ? row.join(' ') : Object.values(row).join(' ');
-            const emailMatch = rowText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-            
-            if (emailMatch) {
-              parsedMembers.push(parseEmailToMember(emailMatch[0]));
-            }
-          });
-
-          if (parsedMembers.length === 0) {
-            alert('No valid member emails found in the uploaded CSV file.');
-            return;
-          }
-
-          masterList = parsedMembers;
-
-          await setDoc(doc(db, "clubs", currentUser.uid), { 
-            members: masterList, 
-            updatedAt: new Date() 
-          });
-
-          if (onSuccess) onSuccess();
-        }
+    // Student Log In
+    document.getElementById('studentLoginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('studentLoginEmail').value.trim();
+      const password = document.getElementById('studentLoginPassword').value;
+      document.getElementById('studentLoginError').textContent = '';
+      signInWithEmailAndPassword(auth, email, password).catch(err => {
+        document.getElementById('studentLoginError').textContent = formatAuthError(err.code);
       });
-    }
+    });
 
-    document.getElementById('initialRosterInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const nameElem = document.getElementById('initialRosterName');
-        nameElem.textContent = file.name;
-        nameElem.classList.remove('empty');
-        processAndSaveRoster(file, () => {
-          showDashboard(currentUser.email);
+    // Student First-Time Sign Up
+    document.getElementById('studentSignupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById('studentSignupName').value.trim();
+      const email = document.getElementById('studentSignupEmail').value.trim();
+      const password = document.getElementById('studentSignupPassword').value;
+      const errBox = document.getElementById('studentSignupError');
+      errBox.textContent = '';
+
+      if (!fullName || !email || !password) {
+        errBox.textContent = 'Please enter your full name, school email, and password.';
+        return;
+      }
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: fullName });
+        await setDoc(doc(db, "students", cred.user.uid), {
+          name: fullName,
+          email: email.toLowerCase(),
+          createdAt: new Date().toISOString()
         });
+        document.getElementById('studentGreeting').textContent = fullName;
+      } catch (err) {
+        errBox.textContent = formatAuthError(err.code);
       }
     });
+
+    document.getElementById('studentLogoutBtn').addEventListener('click', () => signOut(auth));
+
+    // =========================================================
+    // 5. DASHBOARD NAVIGATION & ROSTER MANAGEMENT
+    // =========================================================
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.dashboard-pane').forEach(p => p.style.display = 'none');
+        document.getElementById(btn.dataset.tab).style.display = 'block';
+        if (btn.dataset.tab === 'tabRoster') renderRosterEditor();
+        if (btn.dataset.tab === 'tabHistory') renderHistoryAndStanding();
+      });
+    });
+
+    function showDashboard(email) {
+      document.getElementById('staffLoginCard').style.display = 'none';
+      document.getElementById('staffSignupCard').style.display = 'none';
+      document.getElementById('appDashboard').style.display = 'block';
+      document.getElementById('clubTitleDisplay').textContent = clubData.clubName || 'Club Dashboard';
+      document.getElementById('userGreeting').textContent = `Signed in: ${email}`;
+      updateRosterCountLabel();
+      populateSettingsForm();
+    }
+
+    function updateRosterCountLabel() {
+      const excusedCount = (clubData.members || []).filter(m => m.excused).length;
+      document.getElementById('rosterCount').textContent = 
+        `Roster: ${(clubData.members || []).length} members (${excusedCount} pre-excused)`;
+    }
 
     document.getElementById('updateRosterInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
-        processAndSaveRoster(file, () => {
-          alert(`Full club list successfully updated! Saved ${masterList.length} members.`);
-          document.getElementById('rosterCount').textContent = `Full Club List: ${masterList.length} members loaded`;
-        });
-      }
+      if (!file) return;
+      parseSpreadsheetFile(file, async (rows) => {
+        const parsed = extractMembersFromRows(rows);
+        if (parsed.length === 0) {
+          alert('No valid member emails found in that file.');
+          return;
+        }
+        clubData.members = parsed;
+        await saveClubDataToFirestore();
+        updateRosterCountLabel();
+        renderRosterEditor();
+        alert(`Roster updated! ${clubData.members.length} members saved.`);
+      });
     });
 
+    document.getElementById('addSingleMemberBtn').addEventListener('click', async () => {
+      const name = document.getElementById('newMemberName').value.trim();
+      const email = document.getElementById('newMemberEmail').value.trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid student email.');
+        return;
+      }
+      if (clubData.members.some(m => m.email === email)) {
+        alert('This student is already on the roster.');
+        return;
+      }
+      clubData.members.push(parseEmailToMember(email, name));
+      document.getElementById('newMemberName').value = '';
+      document.getElementById('newMemberEmail').value = '';
+      await saveClubDataToFirestore();
+      updateRosterCountLabel();
+      renderRosterEditor();
+    });
+
+    document.getElementById('rosterSearchInput').addEventListener('input', renderRosterEditor);
+
+    function renderRosterEditor() {
+      const list = document.getElementById('rosterEditorList');
+      const query = document.getElementById('rosterSearchInput').value.toLowerCase();
+      list.innerHTML = '';
+
+      if (!clubData.members || clubData.members.length === 0) {
+        list.innerHTML = `<li style="color:var(--text-muted);">No members yet. Add students above or import a spreadsheet.</li>`;
+        return;
+      }
+
+      clubData.members.forEach((member, index) => {
+        if (query && !member.name.toLowerCase().includes(query) && !member.email.includes(query)) return;
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <div>
+            <strong>${member.name}</strong>
+            ${member.excused ? '<span class="badge badge-excused" style="margin-left: 8px;">Excused</span>' : ''}
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${member.email}</div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-secondary btn-sm toggle-excuse-btn" data-idx="${index}">
+              ${member.excused ? 'Unmark Excused' : 'Mark Excused'}
+            </button>
+            <button type="button" class="btn btn-danger btn-sm remove-member-btn" data-idx="${index}">Remove</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll('.toggle-excuse-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const idx = Number(btn.dataset.idx);
+          clubData.members[idx].excused = !clubData.members[idx].excused;
+          await saveClubDataToFirestore();
+          updateRosterCountLabel();
+          renderRosterEditor();
+        });
+      });
+
+      list.querySelectorAll('.remove-member-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const idx = Number(btn.dataset.idx);
+          clubData.members.splice(idx, 1);
+          await saveClubDataToFirestore();
+          updateRosterCountLabel();
+          renderRosterEditor();
+        });
+      });
+    }
+
+    // =========================================================
+    // 6. DAILY ATTENDANCE CHECK (SPREADSHEET OR LIVE QR)
+    // =========================================================
     document.getElementById('csvFileInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file) {
-        document.getElementById('results').innerHTML = '';
-        const nameElem = document.getElementById('fileName');
-        nameElem.textContent = file.name;
-        nameElem.classList.remove('empty');
-        
-        Papa.parse(file, {
-          header: false,
-          skipEmptyLines: true,
-          complete: (results) => {
-            checkMissing(results.data);
-            document.getElementById('csvFileInput').value = '';
-          }
-        });
-      }
+      if (!file) return;
+      const nameElem = document.getElementById('fileName');
+      nameElem.textContent = file.name;
+      nameElem.classList.remove('empty');
+
+      parseSpreadsheetFile(file, (rows) => {
+        evaluateAttendanceFromRows(rows);
+        document.getElementById('csvFileInput').value = '';
+      });
     });
 
     function cleanStr(str) {
       return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     }
 
-    function checkMissing(csvRows) {
-      if (!masterList || masterList.length === 0) {
-        alert('No full club list found. Please upload your full club list first.');
-        return;
-      }
-
-      const attendeeRows = csvRows.map(row => {
-        let text = '';
-        if (Array.isArray(row)) {
-          text = row.join(' ');
-        } else if (typeof row === 'object' && row !== null) {
-          text = Object.values(row).join(' ');
-        } else {
-          text = String(row);
-        }
-        return cleanStr(text);
-      });
-
+    function evaluateAttendanceFromRows(rows) {
+      const attendeeRows = rows.map(r => cleanStr(Array.isArray(r) ? r.join(' ') : Object.values(r).join(' ')));
       currentMissingMembers = [];
+      currentPresentEmails = [];
       let presentCount = 0;
+      let excusedCount = 0;
 
-      masterList.forEach(member => {
+      clubData.members.forEach(member => {
         const mFirst = cleanStr(member.first);
         const mLast = cleanStr(member.last);
         const mEmail = cleanStr(member.email);
 
         let found = false;
-
         for (const rowText of attendeeRows) {
           if (!rowText) continue;
-
-          if (mEmail && rowText.includes(mEmail)) {
-            found = true;
-            break;
-          }
-
-          if (mFirst && mLast && rowText.includes(mFirst) && rowText.includes(mLast)) {
-            found = true;
-            break;
-          }
-
-          const fPrefix = mFirst.substring(0, Math.min(4, mFirst.length));
-          const lPrefix = mLast.substring(0, Math.min(4, mLast.length));
-          if (fPrefix.length >= 3 && lPrefix.length >= 3 && rowText.includes(fPrefix) && rowText.includes(lPrefix)) {
+          if ((mEmail && rowText.includes(mEmail)) || (mFirst && mLast && rowText.includes(mFirst) && rowText.includes(mLast))) {
             found = true;
             break;
           }
@@ -487,39 +1154,330 @@
 
         if (found) {
           presentCount++;
+          currentPresentEmails.push(member.email);
+        } else if (member.excused) {
+          excusedCount++;
         } else {
           currentMissingMembers.push(member);
         }
       });
 
-      const totalMembers = masterList.length;
+      renderAttendanceResults(presentCount, excusedCount);
+    }
+
+    function renderAttendanceResults(presentCount, excusedCount) {
+      const totalActive = clubData.members.length - excusedCount;
       const missingCount = currentMissingMembers.length;
-      const rate = totalMembers > 0 ? Math.round((presentCount / totalMembers) * 100) : 0;
+      const rate = totalActive > 0 ? Math.round((presentCount / totalActive) * 100) : 100;
 
       document.getElementById('statPresent').textContent = presentCount;
+      document.getElementById('statExcused').textContent = excusedCount;
       document.getElementById('statMissing').textContent = missingCount;
       document.getElementById('statRate').textContent = rate + '%';
       document.getElementById('statsSection').style.display = 'flex';
 
       const resultsUl = document.getElementById('results');
       resultsUl.innerHTML = '';
+      resultsUl.style.display = 'block';
       document.getElementById('count').textContent = missingCount;
       document.getElementById('resultsHeader').style.display = 'flex';
 
+      const chronicFlags = [];
+      currentMissingMembers.forEach(m => {
+        const priorMisses = (clubData.sessions || []).filter(s => (s.missingEmails || []).includes(m.email)).length;
+        if (priorMisses >= 2) chronicFlags.push(`${m.name} (${priorMisses + 1} total absences)`);
+      });
+
+      const alertBanner = document.getElementById('chronicAlertBanner');
+      if (chronicFlags.length > 0) {
+        alertBanner.style.display = 'block';
+        alertBanner.textContent = `⚠️ Chronic Absence Alert (3+ Strikes): ${chronicFlags.join(', ')}`;
+      } else {
+        alertBanner.style.display = 'none';
+      }
+
       if (missingCount === 0) {
-        const li = document.createElement('li');
-        li.textContent = `All ${totalMembers} club members are present!`;
-        li.style.color = 'var(--olive-dark)';
-        resultsUl.appendChild(li);
+        resultsUl.innerHTML = `<li style="color: var(--olive-dark);">All active club members are present!</li>`;
         document.getElementById('openEmailModalBtn').style.display = 'none';
       } else {
-        document.getElementById('openEmailModalBtn').style.display = 'inline-block';
+        document.getElementById('openEmailModalBtn').style.display = 'inline-flex';
         currentMissingMembers.forEach(member => {
+          const priorMisses = (clubData.sessions || []).filter(s => (s.missingEmails || []).includes(member.email)).length;
+          const strikeBadge = priorMisses >= 2 ? `<span class="badge badge-strike">${priorMisses + 1} Misses</span>` : '';
           const li = document.createElement('li');
-          li.innerHTML = `<span>${member.name}</span><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">${member.email}</span>`;
+          li.innerHTML = `
+            <div>
+              <span>${member.name}</span> ${strikeBadge}
+              <div style="font-size: 0.8rem; color: var(--text-muted);">${member.email}</div>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--terracotta);">Unexcused</span>
+          `;
           resultsUl.appendChild(li);
         });
       }
+    }
+
+    document.getElementById('saveSessionBtn').addEventListener('click', async () => {
+      const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const excusedEmails = clubData.members.filter(m => m.excused).map(m => m.email);
+      const missingEmails = currentMissingMembers.map(m => m.email);
+      const rate = document.getElementById('statRate').textContent;
+
+      clubData.sessions = clubData.sessions || [];
+      clubData.sessions.unshift({
+        id: Date.now().toString(),
+        date: todayStr,
+        label: document.getElementById('meetingTitleInput').value.trim() || `Meeting (${todayStr})`,
+        presentEmails: currentPresentEmails,
+        excusedEmails,
+        missingEmails,
+        rate
+      });
+
+      await saveClubDataToFirestore();
+      alert(`Attendance log for ${todayStr} saved to permanent club history!`);
+    });
+
+    document.getElementById('exportReportBtn').addEventListener('click', () => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const rows = [['Club Name', 'Date', 'Student Name', 'Email', 'Status']];
+      clubData.members.forEach(m => {
+        let status = 'Unexcused Absence';
+        if (currentPresentEmails.includes(m.email)) status = 'Present';
+        else if (m.excused) status = 'Excused';
+        rows.push([clubData.clubName, todayStr, m.name, m.email, status]);
+      });
+      downloadCsv(rows, `${clubData.clubName.replace(/\s+/g, '_')}_Attendance_${todayStr}.csv`);
+    });
+
+    function downloadCsv(rows, filename) {
+      const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('
+');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    // =========================================================
+    // 7. LIVE QR CODE HOSTING (STAFF) & SCANNING (STUDENT)
+    // =========================================================
+    document.getElementById('startQrSessionBtn').addEventListener('click', async () => {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      activeQrSessionCode = code;
+      const label = document.getElementById('meetingTitleInput').value.trim() || new Date().toLocaleDateString();
+
+      await setDoc(doc(db, "qr_sessions", code), {
+        clubUid: currentUser.uid,
+        clubName: clubData.clubName,
+        label,
+        createdAt: new Date().toISOString(),
+        attendees: []
+      });
+
+      const baseUrl = window.location.href.split('?')[0];
+      const checkinUrl = `${baseUrl}?checkin=${code}`;
+
+      document.getElementById('qrDisplayArea').style.display = 'block';
+      document.getElementById('qrSessionCodeText').textContent = code;
+      const linkElem = document.getElementById('qrDirectLink');
+      linkElem.href = checkinUrl;
+      linkElem.textContent = checkinUrl;
+
+      const qrContainer = document.getElementById('qrcodeContainer');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: checkinUrl,
+        width: 220,
+        height: 220,
+        colorDark: "#2E3328",
+        colorLight: "#FFFFFF"
+      });
+    });
+
+    async function fetchLiveQrAttendees() {
+      if (!activeQrSessionCode) {
+        alert('Start a Live QR Meeting in the "Live QR Meeting" tab first.');
+        return [];
+      }
+      const snap = await getDoc(doc(db, "qr_sessions", activeQrSessionCode));
+      if (!snap.exists()) return [];
+      const attendees = snap.data().attendees || [];
+      document.getElementById('liveScanCount').textContent = attendees.length;
+      const list = document.getElementById('liveScansList');
+      list.innerHTML = attendees.map(a => `<li><span>${a.name || a.email}</span><span style="font-size:0.8rem;color:var(--olive-dark);">${a.time}</span></li>`).join('');
+      return attendees;
+    }
+
+    document.getElementById('refreshLiveScansBtn').addEventListener('click', fetchLiveQrAttendees);
+
+    document.getElementById('loadLiveQrBtn').addEventListener('click', async () => {
+      const attendees = await fetchLiveQrAttendees();
+      if (attendees.length === 0) return;
+      const rows = attendees.map(a => [a.name, a.email]);
+      evaluateAttendanceFromRows(rows);
+    });
+
+    document.getElementById('startCameraScanBtn').addEventListener('click', () => {
+      document.getElementById('startCameraScanBtn').style.display = 'none';
+      document.getElementById('stopCameraScanBtn').style.display = 'inline-flex';
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async (decodedText) => {
+          stopStudentScanner();
+          let code = decodedText;
+          if (decodedText.includes('checkin=')) {
+            code = decodedText.split('checkin=')[1].split('&')[0];
+          }
+          await processStudentQrCheckIn(code);
+        }
+      ).catch(() => {
+        alert('Camera permission denied or unavailable. Use the 6-character Session Code below.');
+        stopStudentScanner();
+      });
+    });
+
+    function stopStudentScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(() => {});
+        html5QrCode = null;
+      }
+      document.getElementById('startCameraScanBtn').style.display = 'inline-flex';
+      document.getElementById('stopCameraScanBtn').style.display = 'none';
+    }
+
+    document.getElementById('stopCameraScanBtn').addEventListener('click', stopStudentScanner);
+
+    document.getElementById('manualCodeCheckInBtn').addEventListener('click', async () => {
+      const code = document.getElementById('manualSessionCodeInput').value.trim().toUpperCase();
+      if (code) await processStudentQrCheckIn(code);
+    });
+
+    async function processStudentQrCheckIn(rawCode) {
+      const code = rawCode.trim().toUpperCase();
+      if (!currentUser) return;
+      const sessionRef = doc(db, "qr_sessions", code);
+      const snap = await getDoc(sessionRef);
+      const banner = document.getElementById('autoCheckInBanner');
+      banner.style.display = 'block';
+
+      if (!snap.exists()) {
+        banner.style.background = '#FDECEA';
+        banner.style.color = '#C84B31';
+        banner.textContent = `Invalid or expired session code: ${code}`;
+        return;
+      }
+
+      const data = snap.data();
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      await updateDoc(sessionRef, {
+        attendees: arrayUnion({
+          email: currentUser.email.toLowerCase(),
+          name: currentUser.displayName || currentUser.email.split('@')[0],
+          time: timeStr
+        })
+      });
+
+      banner.style.background = '#D8F3DC';
+      banner.style.color = '#1B4332';
+      banner.textContent = `✅ Checked into ${data.clubName} (${data.label}) at ${timeStr}!`;
+    }
+
+    // =========================================================
+    // 8. HISTORY, STANDING, CUSTOM EMAIL PROMPT & FERPA SETTINGS
+    // =========================================================
+    function renderHistoryAndStanding() {
+      const standingList = document.getElementById('memberStandingList');
+      const historyList = document.getElementById('sessionHistoryList');
+      const sessions = clubData.sessions || [];
+
+      standingList.innerHTML = '';
+      clubData.members.forEach(m => {
+        const missedCount = sessions.filter(s => (s.missingEmails || []).includes(m.email)).length;
+        const badge = missedCount >= 3 
+          ? `<span class="badge badge-strike">${missedCount} Unexcused</span>` 
+          : `<span class="badge badge-ok">${missedCount} Unexcused</span>`;
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${m.name} <small style="color:var(--text-muted);">(${m.email})</small></span>${badge}`;
+        standingList.appendChild(li);
+      });
+
+      historyList.innerHTML = sessions.length === 0 
+        ? `<li style="color:var(--text-muted);">No saved meetings yet. Run an attendance check and click "Save to History".</li>`
+        : sessions.map(s => `
+            <li>
+              <div>
+                <strong>${s.label}</strong>
+                <div style="font-size:0.8rem;color:var(--text-muted);">Present: ${(s.presentEmails || []).length} • Missing: ${(s.missingEmails || []).length}</div>
+              </div>
+              <span class="badge badge-ok">${s.rate}</span>
+            </li>
+          `).join('');
+    }
+
+    document.getElementById('exportFullAuditBtn').addEventListener('click', () => {
+      const rows = [['Student Name', 'Email', 'Excused Status', 'Total Saved Absences']];
+      const sessions = clubData.sessions || [];
+      clubData.members.forEach(m => {
+        const missed = sessions.filter(s => (s.missingEmails || []).includes(m.email)).length;
+        rows.push([m.name, m.email, m.excused ? 'Excused' : 'Active', missed]);
+      });
+      downloadCsv(rows, `${clubData.clubName.replace(/\s+/g, '_')}_Semester_Audit.csv`);
+    });
+
+    function populateSettingsForm() {
+      document.getElementById('settingsClubName').value = clubData.clubName || '';
+      document.getElementById('settingsAdvisorName').value = clubData.advisorName || '';
+      document.getElementById('settingsEmailSubject').value = clubData.emailTemplate?.subject || '';
+      document.getElementById('settingsEmailBody').value = clubData.emailTemplate?.body || '';
+      document.getElementById('coAdvisorList').textContent = 
+        (clubData.coAdvisors && clubData.coAdvisors.length > 0) 
+          ? `Authorized Co-Advisors: ${clubData.coAdvisors.join(', ')}` 
+          : 'No co-advisors added yet.';
+    }
+
+    document.getElementById('saveEmailSettingsBtn').addEventListener('click', async () => {
+      clubData.clubName = document.getElementById('settingsClubName').value.trim() || clubData.clubName;
+      clubData.advisorName = document.getElementById('settingsAdvisorName').value.trim() || 'Club Advisor';
+      clubData.emailTemplate = {
+        subject: document.getElementById('settingsEmailSubject').value,
+        body: document.getElementById('settingsEmailBody').value
+      };
+      await saveClubDataToFirestore();
+      document.getElementById('clubTitleDisplay').textContent = clubData.clubName;
+      alert('Custom email prompt & club details saved!');
+    });
+
+    document.getElementById('addCoAdvisorBtn').addEventListener('click', async () => {
+      const email = document.getElementById('coAdvisorEmailInput').value.trim().toLowerCase();
+      if (!email || !email.includes('@')) return;
+      clubData.coAdvisors = clubData.coAdvisors || [];
+      if (!clubData.coAdvisors.includes(email)) clubData.coAdvisors.push(email);
+      document.getElementById('coAdvisorEmailInput').value = '';
+      await saveClubDataToFirestore();
+      populateSettingsForm();
+    });
+
+    document.getElementById('ferpaResetBtn').addEventListener('click', async () => {
+      if (!confirm('Are you sure? This permanently deletes all student names, emails, and attendance history for FERPA compliance.')) return;
+      clubData.members = [];
+      clubData.sessions = [];
+      await saveClubDataToFirestore();
+      location.reload();
+    });
+
+    // =========================================================
+    // 9. CUSTOM EMAIL MODAL
+    // =========================================================
+    function formatTemplateText(templateStr) {
+      const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return templateStr
+        .replace(/\{ClubName\}/g, clubData.clubName || 'Club')
+        .replace(/\{AdvisorName\}/g, clubData.advisorName || 'Club Advisor')
+        .replace(/\{Date\}/g, todayStr);
     }
 
     document.getElementById('openEmailModalBtn').addEventListener('click', () => {
@@ -533,12 +1491,13 @@
           <input type="checkbox" value="${member.email}" id="chk_${idx}" checked>
           <div>
             <strong style="color: var(--text-dark);">${member.name}</strong>
-            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">${member.email}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${member.email}</div>
           </div>
         `;
         checklistContainer.appendChild(div);
       });
 
+      document.getElementById('modalEmailPreview').value = formatTemplateText(clubData.emailTemplate.body);
       document.getElementById('emailModal').style.display = 'flex';
     });
 
@@ -549,15 +1508,14 @@
     document.getElementById('sendEmailBtn').addEventListener('click', () => {
       const checkboxes = document.querySelectorAll('#modalChecklist input[type="checkbox"]:checked');
       const selectedEmails = Array.from(checkboxes).map(cb => cb.value);
-
       if (selectedEmails.length === 0) {
         alert('Please select at least one student to email.');
         return;
       }
 
       const bccString = selectedEmails.join(',');
-      const subject = encodeURIComponent('Missing Club Meeting');
-      const body = encodeURIComponent('Hi,\n\nOur records show that you missed today\'s club meeting. Please reach out if you have an excused absence.\n\nBest,\nClub Advisor');
+      const subject = encodeURIComponent(formatTemplateText(clubData.emailTemplate.subject));
+      const body = encodeURIComponent(document.getElementById('modalEmailPreview').value);
 
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&bcc=${bccString}&su=${subject}&body=${body}`;
       window.open(gmailUrl, '_blank');
