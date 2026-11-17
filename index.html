@@ -189,8 +189,8 @@
 
   <!-- TOP PORTAL SWITCHER -->
   <div class="portal-switcher" id="portalSwitcher">
-    <button type="button" class="portal-tab active" id="switchStaffBtn">Advisor &amp; Officer Portal</button>
-    <button type="button" class="portal-tab" id="switchStudentBtn">Student QR Check-In</button>
+    <button type="button" class="portal-tab active" id="switchStaffBtn" onclick="window.switchPortal('staff')">Advisor &amp; Officer Portal</button>
+    <button type="button" class="portal-tab" id="switchStudentBtn" onclick="window.switchPortal('student')">Student QR Check-In</button>
   </div>
 
   <!-- ========================================================= -->
@@ -213,7 +213,7 @@
 
       <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--cream);">
         <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">New to CheckSync?</span><br>
-        <button type="button" class="btn btn-secondary" id="goToStaffSignupBtn" style="margin-top: 10px;">First-Time Sign Up</button>
+        <button type="button" class="btn btn-secondary" id="goToStaffSignupBtn" onclick="window.showStaffSignup()" style="margin-top: 10px;">First-Time Sign Up</button>
       </div>
 
       <div style="margin-top: 16px;">
@@ -227,7 +227,7 @@
     <div id="staffSignupCard" class="card" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <h2 style="margin: 0;">First-Time Club Setup</h2>
-        <button type="button" class="link-btn" id="backToStaffLoginBtn">← Back to Log In</button>
+        <button type="button" class="link-btn" id="backToStaffLoginBtn" onclick="window.showStaffLogin()">← Back to Log In</button>
       </div>
       <p class="subtitle">Create your club account and set up your member roster via spreadsheet or manual entry.</p>
 
@@ -258,8 +258,8 @@
       <p class="subtitle" style="margin-bottom: 14px;">Choose how you want to add your club members right now:</p>
 
       <div class="portal-switcher" style="margin-bottom: 18px;">
-        <button type="button" class="portal-tab active" id="signupTabUpload">Upload Spreadsheet (.CSV / .XLSX)</button>
-        <button type="button" class="portal-tab" id="signupTabManual">Type Roster Manually</button>
+        <button type="button" class="portal-tab active" id="signupTabUpload" onclick="window.setSignupRosterMode('upload')">Upload Spreadsheet (.CSV / .XLSX)</button>
+        <button type="button" class="portal-tab" id="signupTabManual" onclick="window.setSignupRosterMode('manual')">Type Roster Manually</button>
       </div>
 
       <!-- Option A: Spreadsheet Upload at Sign-Up -->
@@ -275,7 +275,7 @@
       <!-- Option B: Manual Roster Entry at Sign-Up -->
       <div id="signupManualPane" style="display: none;">
         <div id="signupManualRows" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;"></div>
-        <button type="button" class="btn btn-secondary btn-sm" id="signupAddRowBtn">+ Add Another Student</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="signupAddRowBtn" onclick="window.addSignupManualRow()">+ Add Another Student</button>
       </div>
 
       <div style="margin-top: 24px; text-align: right;">
@@ -300,11 +300,11 @@
 
       <!-- DASHBOARD NAVIGATION TABS -->
       <div class="nav-tabs">
-        <button type="button" class="nav-tab active" data-tab="tabAttendance">Attendance Check</button>
-        <button type="button" class="nav-tab" data-tab="tabQrHost">Live QR Meeting</button>
-        <button type="button" class="nav-tab" data-tab="tabRoster">Manage Roster</button>
-        <button type="button" class="nav-tab" data-tab="tabHistory">History &amp; Reports</button>
-        <button type="button" class="nav-tab" data-tab="tabSettings">Email &amp; Settings</button>
+        <button type="button" class="nav-tab active" data-tab="tabAttendance" onclick="window.switchDashboardTab('tabAttendance', this)">Attendance Check</button>
+        <button type="button" class="nav-tab" data-tab="tabQrHost" onclick="window.switchDashboardTab('tabQrHost', this)">Live QR Meeting</button>
+        <button type="button" class="nav-tab" data-tab="tabRoster" onclick="window.switchDashboardTab('tabRoster', this)">Manage Roster</button>
+        <button type="button" class="nav-tab" data-tab="tabHistory" onclick="window.switchDashboardTab('tabHistory', this)">History &amp; Reports</button>
+        <button type="button" class="nav-tab" data-tab="tabSettings" onclick="window.switchDashboardTab('tabSettings', this)">Email &amp; Settings</button>
       </div>
 
       <!-- TAB 1: DAILY ATTENDANCE CHECK -->
@@ -499,7 +499,7 @@
 
         <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--cream); text-align: center;">
           <span style="font-size: 0.86rem; color: var(--text-muted); font-weight: 600;">Don't have a student account yet?</span><br>
-          <button type="button" class="btn btn-secondary btn-sm" id="goToStudentSignupBtn" style="margin-top: 8px;">First-Time Student Sign Up</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="goToStudentSignupBtn" onclick="window.showStudentSignup()" style="margin-top: 8px;">First-Time Student Sign Up</button>
         </div>
         <div id="studentLoginError" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-top: 12px; text-align: center;"></div>
       </div>
@@ -508,7 +508,7 @@
       <div id="studentSignupBox" style="display: none; max-width: 360px; margin: 0 auto; text-align: left;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <strong style="font-size: 1rem;">Create Student Account</strong>
-          <button type="button" class="link-btn" id="backToStudentLoginBtn">← Back to Log In</button>
+          <button type="button" class="link-btn" id="backToStudentLoginBtn" onclick="window.showStudentLogin()">← Back to Log In</button>
         </div>
         <form id="studentSignupForm">
           <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
@@ -572,6 +572,125 @@
 
   <footer>CheckSync • School &amp; Club Attendance Suite</footer>
 
+  <!-- STANDARD SYNCHRONOUS UI NAVIGATION SCRIPT (RUNS IMMEDIATELY, ZERO NETWORK DEPENDENCY) -->
+  <script>
+    window.signupRosterMode = 'upload';
+    window.html5QrCodeInstance = null;
+
+    window.switchPortal = function(mode) {
+      var staffBtn = document.getElementById('switchStaffBtn');
+      var studentBtn = document.getElementById('switchStudentBtn');
+      var staffDiv = document.getElementById('staffPortal');
+      var studentDiv = document.getElementById('studentPortal');
+
+      if (mode === 'student') {
+        studentBtn.classList.add('active');
+        staffBtn.classList.remove('active');
+        studentDiv.style.display = 'block';
+        staffDiv.style.display = 'none';
+      } else {
+        staffBtn.classList.add('active');
+        studentBtn.classList.remove('active');
+        staffDiv.style.display = 'block';
+        studentDiv.style.display = 'none';
+        if (window.stopStudentScanner) window.stopStudentScanner();
+      }
+    };
+
+    window.showStaffSignup = function() {
+      document.getElementById('staffLoginCard').style.display = 'none';
+      document.getElementById('staffSignupCard').style.display = 'block';
+      document.getElementById('staffLoginError').textContent = '';
+      var rowsContainer = document.getElementById('signupManualRows');
+      if (rowsContainer && rowsContainer.children.length === 0) {
+        window.addSignupManualRow();
+        window.addSignupManualRow();
+        window.addSignupManualRow();
+      }
+    };
+
+    window.showStaffLogin = function() {
+      document.getElementById('staffSignupCard').style.display = 'none';
+      document.getElementById('staffLoginCard').style.display = 'block';
+      document.getElementById('staffSignupError').textContent = '';
+    };
+
+    window.showStudentSignup = function() {
+      document.getElementById('studentLoginBox').style.display = 'none';
+      document.getElementById('studentSignupBox').style.display = 'block';
+      document.getElementById('studentLoginError').textContent = '';
+    };
+
+    window.showStudentLogin = function() {
+      document.getElementById('studentSignupBox').style.display = 'none';
+      document.getElementById('studentLoginBox').style.display = 'block';
+      document.getElementById('studentSignupError').textContent = '';
+    };
+
+    window.setSignupRosterMode = function(mode) {
+      window.signupRosterMode = mode;
+      var upTab = document.getElementById('signupTabUpload');
+      var manTab = document.getElementById('signupTabManual');
+      var upPane = document.getElementById('signupUploadPane');
+      var manPane = document.getElementById('signupManualPane');
+
+      if (mode === 'manual') {
+        manTab.classList.add('active');
+        upTab.classList.remove('active');
+        manPane.style.display = 'block';
+        upPane.style.display = 'none';
+        if (document.getElementById('signupManualRows').children.length === 0) {
+          window.addSignupManualRow();
+          window.addSignupManualRow();
+          window.addSignupManualRow();
+        }
+      } else {
+        upTab.classList.add('active');
+        manTab.classList.remove('active');
+        upPane.style.display = 'block';
+        manPane.style.display = 'none';
+      }
+    };
+
+    window.addSignupManualRow = function() {
+      var container = document.getElementById('signupManualRows');
+      var row = document.createElement('div');
+      row.className = 'grid-2 signup-manual-row';
+      row.innerHTML =
+        '<input type="text" class="sm-name" placeholder="Student Full Name (e.g. Alex Rivera)">' +
+        '<div style="display: flex; gap: 6px;">' +
+          '<input type="email" class="sm-email" placeholder="Student Email (alex.rivera@school.org)">' +
+          '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.signup-manual-row\').remove()">✕</button>' +
+        '</div>';
+      container.appendChild(row);
+    };
+
+    window.switchDashboardTab = function(tabId, btnElem) {
+      var tabs = document.querySelectorAll('.nav-tab');
+      for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+      if (btnElem) btnElem.classList.add('active');
+
+      var panes = document.querySelectorAll('.dashboard-pane');
+      for (var j = 0; j < panes.length; j++) panes[j].style.display = 'none';
+      document.getElementById(tabId).style.display = 'block';
+
+      if (tabId === 'tabRoster' && window.renderRosterEditor) window.renderRosterEditor();
+      if (tabId === 'tabHistory' && window.renderHistoryAndStanding) window.renderHistoryAndStanding();
+    };
+
+    // Check URL parameter immediately on load (?checkin=CODE)
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('checkin');
+      if (code) {
+        window.switchPortal('student');
+        var input = document.getElementById('manualSessionCodeInput');
+        if (input) input.value = code.toUpperCase();
+      }
+    })();
+  </script>
+
+  <!-- FIREBASE & DATA MODULE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -594,10 +713,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Global State
     let currentUser = null;
-    let portalMode = 'staff'; // 'staff' or 'student'
-    let signupRosterMode = 'upload'; // 'upload' or 'manual'
     let pendingUploadedRoster = [];
     let isSigningUpNow = false;
 
@@ -609,12 +725,7 @@
       coAdvisors: [],
       emailTemplate: {
         subject: 'Missing {ClubName} Meeting ({Date})',
-        body: 'Hi,
-
-Our records show that you missed today's {ClubName} meeting on {Date}. Please reply if you had an excused absence.
-
-Best,
-{AdvisorName}'
+        body: 'Hi,\n\nOur records show that you missed today\'s {ClubName} meeting on {Date}. Please reply if you had an excused absence.\n\nBest,\n{AdvisorName}'
       }
     };
     let currentMissingMembers = [];
@@ -622,111 +733,10 @@ Best,
     let activeQrSessionCode = null;
     let html5QrCode = null;
 
-    // =========================================================
-    // 1. PORTAL SWITCHING (STAFF VS STUDENT) — GUARANTEED WORKING
-    // =========================================================
-    function switchPortal(mode) {
-      portalMode = mode;
-      const staffBtn = document.getElementById('switchStaffBtn');
-      const studentBtn = document.getElementById('switchStudentBtn');
-      const staffDiv = document.getElementById('staffPortal');
-      const studentDiv = document.getElementById('studentPortal');
-
-      if (mode === 'student') {
-        studentBtn.classList.add('active');
-        staffBtn.classList.remove('active');
-        studentDiv.style.display = 'block';
-        staffDiv.style.display = 'none';
-      } else {
-        staffBtn.classList.add('active');
-        studentBtn.classList.remove('active');
-        staffDiv.style.display = 'block';
-        studentDiv.style.display = 'none';
-        if (html5QrCode) stopStudentScanner();
-      }
-    }
-
-    document.getElementById('switchStaffBtn').addEventListener('click', () => switchPortal('staff'));
-    document.getElementById('switchStudentBtn').addEventListener('click', () => switchPortal('student'));
-
-    // Check URL query param for direct phone camera QR scan (?checkin=CODE)
     const urlParams = new URLSearchParams(window.location.search);
     const pendingQrCodeFromUrl = urlParams.get('checkin');
-    if (pendingQrCodeFromUrl) {
-      switchPortal('student');
-      document.getElementById('manualSessionCodeInput').value = pendingQrCodeFromUrl.toUpperCase();
-    }
 
-    // =========================================================
-    // 2. LOGIN <-> FIRST-TIME SIGN-UP VIEW TOGGLES
-    // =========================================================
-    // Staff toggles
-    document.getElementById('goToStaffSignupBtn').addEventListener('click', () => {
-      document.getElementById('staffLoginCard').style.display = 'none';
-      document.getElementById('staffSignupCard').style.display = 'block';
-      document.getElementById('staffLoginError').textContent = '';
-      if (document.getElementById('signupManualRows').children.length === 0) {
-        addSignupManualRow();
-        addSignupManualRow();
-        addSignupManualRow();
-      }
-    });
-
-    document.getElementById('backToStaffLoginBtn').addEventListener('click', () => {
-      document.getElementById('staffSignupCard').style.display = 'none';
-      document.getElementById('staffLoginCard').style.display = 'block';
-      document.getElementById('staffSignupError').textContent = '';
-    });
-
-    // Student toggles
-    document.getElementById('goToStudentSignupBtn').addEventListener('click', () => {
-      document.getElementById('studentLoginBox').style.display = 'none';
-      document.getElementById('studentSignupBox').style.display = 'block';
-      document.getElementById('studentLoginError').textContent = '';
-    });
-
-    document.getElementById('backToStudentLoginBtn').addEventListener('click', () => {
-      document.getElementById('studentSignupBox').style.display = 'none';
-      document.getElementById('studentLoginBox').style.display = 'block';
-      document.getElementById('studentSignupError').textContent = '';
-    });
-
-    // Staff Sign-Up Roster Method Switcher (Upload vs Manual)
-    document.getElementById('signupTabUpload').addEventListener('click', () => {
-      signupRosterMode = 'upload';
-      document.getElementById('signupTabUpload').classList.add('active');
-      document.getElementById('signupTabManual').classList.remove('active');
-      document.getElementById('signupUploadPane').style.display = 'block';
-      document.getElementById('signupManualPane').style.display = 'none';
-    });
-
-    document.getElementById('signupTabManual').addEventListener('click', () => {
-      signupRosterMode = 'manual';
-      document.getElementById('signupTabManual').classList.add('active');
-      document.getElementById('signupTabUpload').classList.remove('active');
-      document.getElementById('signupManualPane').style.display = 'block';
-      document.getElementById('signupUploadPane').style.display = 'none';
-    });
-
-    function addSignupManualRow() {
-      const container = document.getElementById('signupManualRows');
-      const row = document.createElement('div');
-      row.className = 'grid-2 signup-manual-row';
-      row.innerHTML = `
-        <input type="text" class="sm-name" placeholder="Student Full Name (e.g. Alex Rivera)">
-        <div style="display: flex; gap: 6px;">
-          <input type="email" class="sm-email" placeholder="Student Email (alex.rivera@school.org)">
-          <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.signup-manual-row').remove()">✕</button>
-        </div>
-      `;
-      container.appendChild(row);
-    }
-
-    document.getElementById('signupAddRowBtn').addEventListener('click', addSignupManualRow);
-
-    // =========================================================
-    // 3. HELPERS: NAME & SPREADSHEET PARSING (.CSV & .XLSX)
-    // =========================================================
+    // Helpers
     function capitalizeWord(str) {
       if (!str) return '';
       return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -793,7 +803,6 @@ Best,
       return parsedMembers;
     }
 
-    // Handle file selection during First-Time Sign Up
     document.getElementById('signupRosterFile').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -836,15 +845,12 @@ Best,
       }
     }
 
-    // =========================================================
-    // 4. AUTH STATE & LOGIN / SIGN-UP HANDLERS
-    // =========================================================
+    // Auth Listener
     onAuthStateChanged(auth, async (user) => {
       currentUser = user;
-      if (isSigningUpNow) return; // Wait until sign-up finishes writing Firestore doc
+      if (isSigningUpNow) return;
 
       if (user) {
-        // Update Student Portal Logged-In View
         document.getElementById('studentLoginBox').style.display = 'none';
         document.getElementById('studentSignupBox').style.display = 'none';
         document.getElementById('studentScannerBox').style.display = 'block';
@@ -855,7 +861,6 @@ Best,
           await processStudentQrCheckIn(pendingQrCodeFromUrl);
         }
 
-        // Update Staff Portal Logged-In View
         document.getElementById('staffLoginCard').style.display = 'none';
         document.getElementById('staffSignupCard').style.display = 'none';
 
@@ -865,7 +870,6 @@ Best,
         }
         showDashboard(user.email);
       } else {
-        // Signed Out State
         document.getElementById('staffLoginCard').style.display = 'block';
         document.getElementById('staffSignupCard').style.display = 'none';
         document.getElementById('appDashboard').style.display = 'none';
@@ -887,7 +891,7 @@ Best,
       });
     });
 
-    // Staff First-Time Sign Up (All info + Spreadsheet or Manual Roster)
+    // Staff First-Time Sign Up
     document.getElementById('completeStaffSignupBtn').addEventListener('click', async () => {
       const clubName = document.getElementById('signupClubName').value.trim();
       const advisorName = document.getElementById('signupAdvisorName').value.trim();
@@ -902,7 +906,7 @@ Best,
       }
 
       let initialMembers = [];
-      if (signupRosterMode === 'upload') {
+      if (window.signupRosterMode === 'upload') {
         if (pendingUploadedRoster.length === 0) {
           errBox.textContent = 'Please upload a CSV/Excel roster file or switch to "Type Roster Manually".';
           return;
@@ -992,20 +996,7 @@ Best,
 
     document.getElementById('studentLogoutBtn').addEventListener('click', () => signOut(auth));
 
-    // =========================================================
-    // 5. DASHBOARD NAVIGATION & ROSTER MANAGEMENT
-    // =========================================================
-    document.querySelectorAll('.nav-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.dashboard-pane').forEach(p => p.style.display = 'none');
-        document.getElementById(btn.dataset.tab).style.display = 'block';
-        if (btn.dataset.tab === 'tabRoster') renderRosterEditor();
-        if (btn.dataset.tab === 'tabHistory') renderHistoryAndStanding();
-      });
-    });
-
+    // Dashboard Functions
     function showDashboard(email) {
       document.getElementById('staffLoginCard').style.display = 'none';
       document.getElementById('staffSignupCard').style.display = 'none';
@@ -1034,7 +1025,7 @@ Best,
         clubData.members = parsed;
         await saveClubDataToFirestore();
         updateRosterCountLabel();
-        renderRosterEditor();
+        window.renderRosterEditor();
         alert(`Roster updated! ${clubData.members.length} members saved.`);
       });
     });
@@ -1055,12 +1046,12 @@ Best,
       document.getElementById('newMemberEmail').value = '';
       await saveClubDataToFirestore();
       updateRosterCountLabel();
-      renderRosterEditor();
+      window.renderRosterEditor();
     });
 
-    document.getElementById('rosterSearchInput').addEventListener('input', renderRosterEditor);
+    document.getElementById('rosterSearchInput').addEventListener('input', () => window.renderRosterEditor());
 
-    function renderRosterEditor() {
+    window.renderRosterEditor = function() {
       const list = document.getElementById('rosterEditorList');
       const query = document.getElementById('rosterSearchInput').value.toLowerCase();
       list.innerHTML = '';
@@ -1096,7 +1087,7 @@ Best,
           clubData.members[idx].excused = !clubData.members[idx].excused;
           await saveClubDataToFirestore();
           updateRosterCountLabel();
-          renderRosterEditor();
+          window.renderRosterEditor();
         });
       });
 
@@ -1106,14 +1097,12 @@ Best,
           clubData.members.splice(idx, 1);
           await saveClubDataToFirestore();
           updateRosterCountLabel();
-          renderRosterEditor();
+          window.renderRosterEditor();
         });
       });
-    }
+    };
 
-    // =========================================================
-    // 6. DAILY ATTENDANCE CHECK (SPREADSHEET OR LIVE QR)
-    // =========================================================
+    // Daily Attendance Check
     document.getElementById('csvFileInput').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -1251,8 +1240,7 @@ Best,
     });
 
     function downloadCsv(rows, filename) {
-      const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('
-');
+      const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -1260,9 +1248,7 @@ Best,
       link.click();
     }
 
-    // =========================================================
-    // 7. LIVE QR CODE HOSTING (STAFF) & SCANNING (STUDENT)
-    // =========================================================
+    // Live QR Hosting & Scanning
     document.getElementById('startQrSessionBtn').addEventListener('click', async () => {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
       activeQrSessionCode = code;
@@ -1327,7 +1313,7 @@ Best,
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 240, height: 240 } },
         async (decodedText) => {
-          stopStudentScanner();
+          window.stopStudentScanner();
           let code = decodedText;
           if (decodedText.includes('checkin=')) {
             code = decodedText.split('checkin=')[1].split('&')[0];
@@ -1336,20 +1322,22 @@ Best,
         }
       ).catch(() => {
         alert('Camera permission denied or unavailable. Use the 6-character Session Code below.');
-        stopStudentScanner();
+        window.stopStudentScanner();
       });
     });
 
-    function stopStudentScanner() {
+    window.stopStudentScanner = function() {
       if (html5QrCode) {
         html5QrCode.stop().catch(() => {});
         html5QrCode = null;
       }
-      document.getElementById('startCameraScanBtn').style.display = 'inline-flex';
-      document.getElementById('stopCameraScanBtn').style.display = 'none';
-    }
+      const startBtn = document.getElementById('startCameraScanBtn');
+      const stopBtn = document.getElementById('stopCameraScanBtn');
+      if (startBtn) startBtn.style.display = 'inline-flex';
+      if (stopBtn) stopBtn.style.display = 'none';
+    };
 
-    document.getElementById('stopCameraScanBtn').addEventListener('click', stopStudentScanner);
+    document.getElementById('stopCameraScanBtn').addEventListener('click', () => window.stopStudentScanner());
 
     document.getElementById('manualCodeCheckInBtn').addEventListener('click', async () => {
       const code = document.getElementById('manualSessionCodeInput').value.trim().toUpperCase();
@@ -1386,10 +1374,8 @@ Best,
       banner.textContent = `✅ Checked into ${data.clubName} (${data.label}) at ${timeStr}!`;
     }
 
-    // =========================================================
-    // 8. HISTORY, STANDING, CUSTOM EMAIL PROMPT & FERPA SETTINGS
-    // =========================================================
-    function renderHistoryAndStanding() {
+    // History & Settings
+    window.renderHistoryAndStanding = function() {
       const standingList = document.getElementById('memberStandingList');
       const historyList = document.getElementById('sessionHistoryList');
       const sessions = clubData.sessions || [];
@@ -1416,7 +1402,7 @@ Best,
               <span class="badge badge-ok">${s.rate}</span>
             </li>
           `).join('');
-    }
+    };
 
     document.getElementById('exportFullAuditBtn').addEventListener('click', () => {
       const rows = [['Student Name', 'Email', 'Excused Status', 'Total Saved Absences']];
@@ -1469,9 +1455,7 @@ Best,
       location.reload();
     });
 
-    // =========================================================
-    // 9. CUSTOM EMAIL MODAL
-    // =========================================================
+    // Custom Email Modal
     function formatTemplateText(templateStr) {
       const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       return templateStr
