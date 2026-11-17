@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheckSync — Club & School Attendance</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --terracotta: #CB997E;
+      --sand: #DDBEA9;
+      --cream: #FFE8D6;
+      --sage-light: #B7B7A4;
+      --sage-mid: #A5A58D;
+      --olive-dark: #6B705C;
+      --text-dark: #2E3328;
+      --text-muted: #646B5C;
+      --card-bg: #FFFFFF;
+      --bg-body: #FAF5F0;
+      --danger: #C84B31;
+      --warning-bg: #FFF3CD;
+      --warning-text: #856404;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; }
+    body { max-width: 780px; margin: 40px auto; padding: 0 20px 60px; color: var(--text-dark); background: var(--bg-body); }
+    
+    h2 { font-weight: 800; font-size: 1.9rem; margin-bottom: 10px; color: var(--text-dark); letter-spacing: -0.5px; }
+    h3 { font-weight: 700; color: var(--text-dark); letter-spacing: -0.3px; margin-top: 0; }
+    .subtitle { color: var(--text-muted); font-size: 0.94rem; font-weight: 500; margin-top: 0; margin-bottom: 24px; line-height: 1.55; }
+    
+    .card { background: var(--card-bg); border: 1px solid var(--sand); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(107, 112, 92, 0.06); }
+    
+    .portal-switcher {
+      display: flex;
+      background: var(--cream);
+      border: 1px solid var(--sand);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+    .portal-tab {
+      flex: 1;
+      padding: 11px 14px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .portal-tab.active {
+      background: var(--olive-dark);
+      color: #FFF;
+      box-shadow: 0 2px 6px rgba(107, 112, 92, 0.2);
+    }
+
+    .nav-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--cream);
+      padding-bottom: 12px;
+    }
+    .nav-tab {
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--sand);
+      background: var(--card-bg);
+      color: var(--text-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { background: var(--cream); }
+    .nav-tab.active { background: var(--terracotta); color: #FFF; border-color: var(--terracotta); }
+
+    .upload-box { 
+      border: 2px dashed var(--sage-light); 
+      border-radius: 14px; 
+      padding: 28px 20px; 
+      background: var(--cream); 
+      transition: all 0.25s ease; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+    }
+    .upload-box:hover { border-color: var(--terracotta); background: #FFF1E6; }
+    input[type="file"] { display: none; }
+    
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--sage-light);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background: var(--bg-body);
+      color: var(--text-dark);
+    }
+    input:focus, textarea:focus, select:focus { outline: 2px solid var(--terracotta); border-color: transparent; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--olive-dark); color: #FFF; padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.92rem; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(107, 112, 92, 0.2); }
+    .btn:hover { background: var(--sage-mid); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-sm { padding: 7px 12px; font-size: 0.8rem; border-radius: 8px; }
+    
+    .btn-secondary { background: var(--sage-light); color: var(--text-dark); padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 0.92rem; transition: background 0.2s; }
+    .btn-secondary:hover { background: var(--sand); }
+    
+    .btn-email { background: var(--terracotta); color: #FFF; font-weight: 700; box-shadow: 0 2px 8px rgba(203, 153, 126, 0.3); }
+    .btn-email:hover { background: #B8856A; }
+
+    .btn-danger { background: #FDECEA; color: var(--danger); border: 1px solid #F5C2C7; box-shadow: none; }
+    .btn-danger:hover { background: #FADBD8; }
+
+    .btn-danger-solid { background: var(--danger); color: #FFF; box-shadow: 0 2px 8px rgba(200, 75, 49, 0.25); }
+    .btn-danger-solid:hover { background: #A93B24; }
+
+    .link-btn { background: none; border: none; color: var(--terracotta); font-weight: 700; font-size: 0.9rem; cursor: pointer; text-decoration: underline; padding: 4px; }
+    .link-btn:hover { color: var(--olive-dark); }
+
+    .filename { 
+      color: var(--text-dark); 
+      font-size: 0.86rem; 
+      font-weight: 700; 
+      background: var(--sand);
+      padding: 6px 14px;
+      border-radius: 20px;
+      word-break: break-all;
+      max-width: 90%;
+    }
+    .filename.empty { background: transparent; color: var(--text-muted); font-weight: 500; }
+    
+    .stats-container { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 120px; background: var(--card-bg); border: 1px solid var(--sand); border-radius: 14px; padding: 14px; text-align: center; box-shadow: 0 2px 10px rgba(107, 112, 92, 0.04); }
+    .stat-value { font-size: 1.55rem; font-weight: 800; color: var(--text-dark); margin-top: 4px; }
+    .stat-label { font-size: 0.74rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; }
+    
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; flex-wrap: wrap; gap: 10px; }
+    .results-header h3 { margin: 0; font-size: 1.2rem; }
+    
+    ul.clean-list { list-style: none; padding: 0; margin-top: 12px; border: 1px solid var(--sand); border-radius: 14px; overflow: hidden; background: var(--card-bg); }
+    ul.clean-list li { padding: 12px 16px; border-bottom: 1px solid var(--cream); font-size: 0.92rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    ul.clean-list li:last-child { border-bottom: none; }
+
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .badge-excused { background: #E2ECE9; color: #2D6A4F; }
+    .badge-strike { background: #FDECEA; color: var(--danger); }
+    .badge-ok { background: var(--cream); color: var(--olive-dark); }
+    .badge-role { background: var(--olive-dark); color: #FFF; }
+    .badge-student { background: var(--terracotta); color: #FFF; }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .live-pill.active { background: #D8F3DC; color: #1B4332; border: 1px solid #95D5B2; }
+    .live-pill.stopped { background: #FDECEA; color: var(--danger); border: 1px solid #F5C2C7; }
+
+    details.live-dropdown {
+      border: 1px solid var(--sand);
+      border-radius: 14px;
+      background: var(--card-bg);
+      margin-top: 12px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    details.live-dropdown summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 13px 16px;
+      background: var(--cream);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      font-size: 0.92rem;
+      color: var(--text-dark);
+      user-select: none;
+      gap: 10px;
+    }
+    details.live-dropdown summary::-webkit-details-marker {
+      display: none;
+    }
+    details.live-dropdown summary:hover {
+      background: #FFF1E6;
+    }
+    details.live-dropdown .dropdown-chevron {
+      display: inline-block;
+      transition: transform 0.2s ease;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+    details.live-dropdown[open] .dropdown-chevron {
+      transform: rotate(180deg);
+    }
+    details.live-dropdown ul.clean-list {
+      margin-top: 0;
+      border: none;
+      border-top: 1px solid var(--sand);
+      border-radius: 0;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2D6A4F; animation: pulseDot 1.4s infinite; }
+    @keyframes pulseDot {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(1.3); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(46, 51, 40, 0.55); backdrop-filter: blur(3px); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+    .modal-content { background: var(--card-bg); width: 100%; max-width: 560px; border-radius: 18px; padding: 26px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 12px 32px rgba(0,0,0,0.18); border: 1px solid var(--sand); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--cream); padding-bottom: 12px; }
+    .modal-header h3 { margin: 0; }
+    .modal-body { overflow-y: auto; flex: 1; margin-bottom: 16px; border: 1px solid var(--sand); border-radius: 10px; padding: 12px; background: var(--bg-body); }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    
+    .checkbox-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--sand); cursor: pointer; border-radius: 8px; transition: background 0.15s; }
+    .checkbox-item:hover { background: var(--cream); }
+    .checkbox-item input { margin-right: 14px; transform: scale(1.2); cursor: pointer; accent-color: var(--terracotta); width: auto; }
+    
+    .auth-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--cream); padding: 14px 18px; border-radius: 14px; border: 1px solid var(--sand); flex-wrap: wrap; gap: 10px; }
+    .auth-bar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .qr-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #FFF; border: 2px solid var(--sand); border-radius: 14px; margin: 16px auto; max-width: 280px; }
+    .session-code-display {
+      display: inline-block;
+      background: var(--cream);
+      border: 2px solid var(--sand);
+      padding: 8px 20px;
+      border-radius: 12px;
+      font-family: monospace;
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: var(--text-dark);
+      margin: 8px 0;
+    }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--sand); }
+    
+    .alert-banner { background: var(--warning-bg); color: var(--warning-text); border: 1px solid #FFEEBA; padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 700; margin-bottom: 18px; }
+    .success-banner { background: #D8F3DC; color: #1B4332; border: 1px solid #B7E4C7; padding: 14px 18px; border-radius: 12px; font-size: 0.92rem; font-weight: 700; margin-top: 16px; text-align: center; }
+
+    footer { margin-top: 40px; text-align: center; font-size: 0.86rem; font-weight: 600; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP PORTAL SWITCHER (ONLY VISIBLE WHEN LOGGED OUT) -->
+  <div class="portal-switcher" id="portalSwitcher">
+    <button type="button" class="portal-tab active" id="switchStaffBtn" onclick="switchPortal('staff')">Advisor &amp; Officer Portal</button>
+    <button type="button" class="portal-tab" id="switchStudentBtn" onclick="switchPortal('student')">Student QR Check-In</button>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- PORTAL 1: STAFF / ADVISOR PORTAL                          -->
+  <!-- ========================================================= -->
+  <div id="staffPortal">
+
+    <!-- STEP 1: CLEAN ADVISOR LOGIN VIEW -->
+    <div id="staffLoginCard" class="card" style="text-align: center;">
+      <span class="badge badge-role" style="margin-bottom: 10px; display: inline-block;">Advisor &amp; Officer Portal</span>
+      <h2>CheckSync</h2>
+      <p class="subtitle">Sign in with your <strong>Advisor / Officer email</strong> to manage attendance, rosters, and live QR sessions.</p>
+
+      <div style="max-width: 360px; margin: 0 auto; text-align: left;">
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+          <input type="email" id="loginEmail" placeholder="Advisor email address" autocomplete="username">
+          <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+        </div>
+        <button type="button" class="btn" id="staffLoginSubmitBtn" onclick="handleStaffLogin()" style="width: 100%;">Advisor Log In</button>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--cream);">
+        <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">New club advisor or officer?</span><br>
+        <button type="button" class="btn btn-secondary" id="goToStaffSignupBtn" onclick="showStaffSignup()" style="margin-top: 10px;">First-Time Advisor Sign Up</button>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <a href="https://docs.google.com/document/d/1vrwncAMn1HLO8yFFhBOTURXFofI_DFf9LS5V4J-DCQU/edit?usp=sharing" target="_blank" rel="noopener noreferrer" style="color: var(--olive-dark); text-decoration: underline; font-weight: 700; font-size: 0.85rem;">Reference guide for first–time use</a>
+      </div>
+
+      <div id="staffLoginError" style="color: var(--danger); font-size: 0.88rem; margin-top: 14px; font-weight: 700;"></div>
+    </div>
+
+    <!-- STEP 2: FIRST-TIME ADVISOR SIGN-UP WIZARD -->
+    <div id="staffSignupCard" class="card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2 style="margin: 0;">First-Time Advisor Setup</h2>
+        <button type="button" class="link-btn" id="backToStaffLoginBtn" onclick="showStaffLogin()">← Back to Log In</button>
+      </div>
+      <p class="subtitle">Register your advisor email &amp; password (permanently tied to your Advisor role) and set up your club.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Club Name *</label>
+            <input type="text" id="signupClubName" placeholder="e.g. Robotics Club">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Advisor / Officer Name *</label>
+            <input type="text" id="signupAdvisorName" placeholder="e.g. Ms. Alvarez">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Advisor Email *</label>
+            <input type="email" id="signupEmail" placeholder="advisor@school.org">
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">Create Password (min 6 chars) *</label>
+            <input type="password" id="signupPassword" placeholder="••••••••">
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom: 8px;">Initial Club Roster</h3>
+      <p class="subtitle" style="margin-bottom: 14px;">Choose how you want to add your club members:</p>
+
+      <div class="portal-switcher" style="margin-bottom: 18px;">
+        <button type="button" class="portal-tab active" id="signupTabUpload" onclick="setSignupRosterMode('upload')">Upload Spreadsheet</button>
+        <button type="button" class="portal-tab" id="signupTabManual" onclick="setSignupRosterMode('manual')">Type Manually</button>
+        <button type="button" class="portal-tab" id="signupTabSkip" onclick="setSignupRosterMode('skip')">Add Later</button>
+      </div>
+
+      <!-- Option A: Spreadsheet Upload at Sign-Up -->
+      <div id="signupUploadPane">
+        <div class="upload-box">
+          <label for="signupRosterFile" class="btn">Choose CSV or Excel File</label>
+          <input type="file" id="signupRosterFile" accept=".csv,.xlsx,.xls" onchange="handleSignupFileUpload(this)">
+          <div id="signupRosterFileName" class="filename empty">No file selected</div>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Supports .csv, .xlsx, and .xls files with student emails</span>
+        </div>
+      </div>
+
+      <!-- Option B: Manual Roster Entry at Sign-Up -->
+      <div id="signupManualPane" style="display: none;">
+        <div id="signupManualRows" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;"></div>
+        <button type="button" class="btn btn-secondary btn-sm" id="signupAddRowBtn" onclick="addSignupManualRow()">+ Add Another Student</button>
+      </div>
+
+      <!-- Option C: Skip for Now -->
+      <div id="signupSkipPane" style="display: none; background: var(--cream); padding: 16px; border-radius: 12px; text-align: center; font-size: 0.88rem; color: var(--text-muted); font-weight: 600;">
+        You can add students individually or upload a spreadsheet anytime inside the <strong>Manage Roster</strong> tab.
+      </div>
+
+      <div style="margin-top: 24px; text-align: right;">
+        <button type="button" class="btn" id="completeStaffSignupBtn" onclick="handleCompleteStaffSignup()" style="width: 100%; padding: 14px;">Create Advisor Account &amp; Launch Dashboard</button>
+      </div>
+
+      <div id="staffSignupError" style="color: var(--danger); font-size: 0.88rem; margin-top: 14px; font-weight: 700; text-align: center;"></div>
+    </div>
+
+    <!-- STEP 3: MAIN ADVISOR DASHBOARD (NO STUDENT PORTAL BUTTON VISIBLE) -->
+    <div id="appDashboard" style="display: none;">
+      <div class="auth-bar">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span id="clubTitleDisplay" style="font-weight: 800; font-size: 1.08rem; color: var(--text-dark);"></span>
+            <span class="badge badge-role">Advisor</span>
+          </div>
+          <span id="userGreeting" style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600; display: block; margin-top: 2px;"></span>
+          <span id="rosterCount" style="font-size: 0.82rem; color: var(--olive-dark); font-weight: 700; display: block; margin-top: 2px;"></span>
+        </div>
+        <div class="auth-bar-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="logoutBtn" onclick="handleSignOut()">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD NAVIGATION TABS -->
+      <div class="nav-tabs">
+        <button type="button" class="nav-tab active" data-tab="tabQrHost" onclick="switchDashboardTab('tabQrHost', this)">Live QR Meeting</button>
+        <button type="button" class="nav-tab" data-tab="tabAttendance" onclick="switchDashboardTab('tabAttendance', this)">Attendance Check</button>
+        <button type="button" class="nav-tab" data-tab="tabRoster" onclick="switchDashboardTab('tabRoster', this)">Manage Roster</button>
+        <button type="button" class="nav-tab" data-tab="tabHistory" onclick="switchDashboardTab('tabHistory', this)">History &amp; Reports</button>
+        <button type="button" class="nav-tab" data-tab="tabSettings" onclick="switchDashboardTab('tabSettings', this)">Email &amp; Settings</button>
+      </div>
+
+      <!-- TAB 1: LIVE QR CODE MEETING HOST & REAL-TIME FEED -->
+      <div id="tabQrHost" class="dashboard-pane">
+        <div class="card" style="text-align: center;">
+          <h3>Live QR Check-In Session</h3>
+          <p class="subtitle">Generate a unique QR code and 6-character code for today's meeting. Students appear below automatically in real time as they sign in.</p>
+          
+          <div id="qrSetupControls" style="max-width: 380px; margin: 0 auto 14px;">
+            <input type="text" id="meetingTitleInput" placeholder="Meeting Label (e.g. Nov 17 General Meeting)" style="margin-bottom: 12px;">
+            <button type="button" class="btn" id="startQrSessionBtn" onclick="handleStartQrSession()" style="width: 100%;">Generate Unique QR &amp; Session Code</button>
+          </div>
+
+          <div id="qrDisplayArea" style="display: none; margin-top: 16px;">
+            <div style="margin-bottom: 10px;">
+              <span id="sessionStatusPill" class="live-pill active"><span class="live-dot"></span> Session Active — Accepting Check-Ins</span>
+            </div>
+
+            <div id="activeQrVisuals">
+              <div class="qr-box" id="qrcodeContainer"></div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px;">Manual Session Code</div>
+              <div class="session-code-display" id="qrSessionCodeText"></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+                Direct Link: <a id="qrDirectLink" href="#" target="_blank" style="color: var(--terracotta); word-break: break-all;"></a>
+              </div>
+
+              <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                <button type="button" class="btn btn-danger-solid" id="stopQrSessionBtn" onclick="handleStopQrSession()">Stop Session (Close Check-In)</button>
+              </div>
+            </div>
+
+            <div id="stoppedQrControls" style="display: none; margin-bottom: 20px;">
+              <p style="font-size: 0.88rem; color: var(--text-muted); font-weight: 600; margin-bottom: 12px;">
+                This session is closed. No further student check-ins are accepted for code <strong id="closedSessionCodeLabel"></strong>.
+              </p>
+              <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn" onclick="handleSyncLiveQrAndSwitch()">Evaluate Attendance from This Session</button>
+                <button type="button" class="btn btn-secondary" onclick="resetQrHostForNewSession()">Start New Session</button>
+              </div>
+            </div>
+            
+            <div id="liveSessionFeedSection" style="text-align: left; margin-top: 22px; padding-top: 18px; border-top: 2px solid var(--cream);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px;">
+                <h4 style="margin: 0;">Live Session Attendees</h4>
+                <span style="font-size: 0.78rem; color: #2D6A4F; font-weight: 800;">● Auto-updating live</span>
+              </div>
+
+              <!-- Dropdown 1: Present / Checked-In Attendees -->
+              <details class="live-dropdown" id="livePresentDropdown">
+                <summary>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>Present</span>
+                    <span class="badge badge-excused" id="livePresentCount">0</span>
+                  </div>
+                  <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">View list <span class="dropdown-chevron">▾</span></span>
+                </summary>
+                <ul id="livePresentList" class="clean-list">
+                  <li style="color: var(--text-muted);">Waiting for students to check in...</li>
+                </ul>
+              </details>
+
+              <!-- Dropdown 2: Missing Roster Members -->
+              <details class="live-dropdown" id="liveMissingDropdown">
+                <summary>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>Missing Members</span>
+                    <span class="badge badge-strike" id="liveMissingCount">0</span>
+                  </div>
+                  <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">View list <span class="dropdown-chevron">▾</span></span>
+                </summary>
+                <ul id="liveMissingList" class="clean-list">
+                  <li style="color: var(--text-muted);">No missing members.</li>
+                </ul>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DAILY ATTENDANCE CHECK -->
+      <div id="tabAttendance" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <h3>Daily Attendance Check</h3>
+          <p class="subtitle" style="margin-bottom: 16px;">Compare today's attendees against your club roster via 5-Star spreadsheet upload or your QR session.</p>
+          
+          <div class="upload-box">
+            <label for="csvFileInput" class="btn">Choose 5-Star Spreadsheet (.csv, .xlsx)</label>
+            <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" onchange="handleAttendanceFileUpload(this)">
+            <div id="fileName" class="filename empty">No file selected</div>
+          </div>
+
+          <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Using Live QR Check-In today?</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="loadLiveQrBtn" onclick="handleSyncLiveQr()">Load QR Session Attendees</button>
+          </div>
+        </div>
+
+        <div id="chronicAlertBanner" class="alert-banner" style="display: none;"></div>
+
+        <div class="stats-container" id="statsSection" style="display: none;">
+          <div class="stat-card">
+            <div class="stat-label">Present</div>
+            <div class="stat-value" id="statPresent" style="color: var(--olive-dark);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Excused</div>
+            <div class="stat-value" id="statExcused" style="color: #2D6A4F;">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Unexcused</div>
+            <div class="stat-value" id="statMissing" style="color: var(--terracotta);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Rate</div>
+            <div class="stat-value" id="statRate" style="color: var(--text-dark);">0%</div>
+          </div>
+        </div>
+
+        <div class="results-header" id="resultsHeader" style="display: none;">
+          <h3>Missing Members (<span id="count">0</span>)</h3>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" id="saveSessionBtn" onclick="handleSaveSession()">Save to History</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="exportReportBtn" onclick="handleExportDailyReport()">Export CSV Report</button>
+            <button type="button" class="btn btn-email btn-sm" id="openEmailModalBtn" onclick="openEmailModal()">Email Missing</button>
+          </div>
+        </div>
+        
+        <ul id="results" class="clean-list" style="display: none;"></ul>
+      </div>
+
+      <!-- TAB 3: INTERACTIVE ROSTER MANAGEMENT -->
+      <div id="tabRoster" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px;">
+            <div>
+              <h3 style="margin-bottom: 4px;">Club Roster Editor</h3>
+              <p class="subtitle" style="margin: 0;">Add individual students, mark excused absences, or import a replacement spreadsheet.</p>
+            </div>
+            <label for="updateRosterInput" class="btn btn-secondary btn-sm" style="cursor: pointer;">Import CSV / Excel</label>
+            <input type="file" id="updateRosterInput" accept=".csv,.xlsx,.xls" onchange="handleUpdateRosterFile(this)">
+          </div>
+
+          <div class="grid-2" style="background: var(--cream); padding: 14px; border-radius: 12px; margin-bottom: 18px;">
+            <input type="text" id="newMemberName" placeholder="Full Name (e.g. Maya Lin)">
+            <div style="display: flex; gap: 8px;">
+              <input type="email" id="newMemberEmail" placeholder="Student Email">
+              <button type="button" class="btn btn-sm" id="addSingleMemberBtn" onclick="handleAddSingleMember()">Add</button>
+            </div>
+          </div>
+
+          <input type="text" id="rosterSearchInput" placeholder="Search roster by name or email..." oninput="renderRosterEditor()" style="margin-bottom: 12px;">
+          <ul id="rosterEditorList" class="clean-list"></ul>
+        </div>
+      </div>
+
+      <!-- TAB 4: ATTENDANCE HISTORY & REPORTS -->
+      <div id="tabHistory" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <h3 style="margin-bottom: 4px;">Saved Meeting Logs &amp; Standing</h3>
+              <p class="subtitle" style="margin: 0;">Audit trail for school administrators and automatic chronic-absence flagging.</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="exportFullAuditBtn" onclick="handleExportFullAudit()">Download Full Semester CSV</button>
+          </div>
+
+          <h4 style="margin-top: 20px; margin-bottom: 8px;">Member Attendance Standing</h4>
+          <ul id="memberStandingList" class="clean-list"></ul>
+
+          <h4 style="margin-top: 24px; margin-bottom: 8px;">Past Saved Sessions</h4>
+          <ul id="sessionHistoryList" class="clean-list"></ul>
+        </div>
+      </div>
+
+      <!-- TAB 5: CUSTOM EMAIL & FERPA SETTINGS -->
+      <div id="tabSettings" class="dashboard-pane" style="display: none;">
+        <div class="card">
+          <h3>Custom Email Prompt / Template</h3>
+          <p class="subtitle">Customize the message opened in Gmail when emailing missing students. Tags: <code>{ClubName}</code>, <code>{Date}</code>, <code>{AdvisorName}</code></p>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Club Name</label>
+              <input type="text" id="settingsClubName" placeholder="e.g. Varsity Debate Club">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Advisor / Sender Name</label>
+              <input type="text" id="settingsAdvisorName" placeholder="e.g. Mr. Thompson">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Email Subject</label>
+              <input type="text" id="settingsEmailSubject" placeholder="Missing {ClubName} Meeting - {Date}">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">Email Body</label>
+              <textarea id="settingsEmailBody" rows="5"></textarea>
+            </div>
+            <button type="button" class="btn" id="saveEmailSettingsBtn" onclick="handleSaveEmailSettings()" style="align-self: flex-start;">Save Email Template</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>FERPA Data Controls</h3>
+          <p class="subtitle">Wipe student roster data and attendance logs at the end of the school year.</p>
+          <button type="button" class="btn btn-danger btn-sm" id="ferpaResetBtn" onclick="handleFerpaReset()">FERPA End-of-Year Wipe (Delete Roster &amp; Logs)</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- PORTAL 2: STUDENT QR CHECK-IN PORTAL                      -->
+  <!-- ========================================================= -->
+  <div id="studentPortal" style="display: none;">
+    <div class="card" style="text-align: center;">
+      <span class="badge badge-student" style="margin-bottom: 10px; display: inline-block;">Student Portal</span>
+      <h2>Student QR Check-In</h2>
+      <p class="subtitle">Sign in with your <strong>Student email</strong> to scan your club's QR code or enter the 6-character session code.</p>
+
+      <!-- Student Login Box -->
+      <div id="studentLoginBox" style="max-width: 360px; margin: 0 auto; text-align: left;">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+          <input type="email" id="studentLoginEmail" placeholder="Student School Email">
+          <input type="password" id="studentLoginPassword" placeholder="Password">
+        </div>
+        <button type="button" class="btn" id="studentLoginSubmitBtn" onclick="handleStudentLogin()" style="width: 100%;">Student Log In</button>
+
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--cream); text-align: center;">
+          <span style="font-size: 0.86rem; color: var(--text-muted); font-weight: 600;">First time using CheckSync as a student?</span><br>
+          <button type="button" class="btn btn-secondary btn-sm" id="goToStudentSignupBtn" onclick="showStudentSignup()" style="margin-top: 8px;">First-Time Student Sign Up</button>
+        </div>
+        <div id="studentLoginError" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-top: 12px; text-align: center;"></div>
+      </div>
+
+      <!-- Student First-Time Sign-Up Box -->
+      <div id="studentSignupBox" style="display: none; max-width: 360px; margin: 0 auto; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <strong style="font-size: 1rem;">Create Student Account</strong>
+          <button type="button" class="link-btn" id="backToStudentLoginBtn" onclick="showStudentLogin()">← Back to Log In</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+          <input type="text" id="studentSignupName" placeholder="Full Name (e.g. Jordan Patel)">
+          <input type="email" id="studentSignupEmail" placeholder="Student School Email">
+          <input type="password" id="studentSignupPassword" placeholder="Create Password (min 6 chars)">
+        </div>
+        <button type="button" class="btn" id="studentSignupSubmitBtn" onclick="handleStudentSignup()" style="width: 100%;">Create Student Account</button>
+        <div id="studentSignupError" style="color: var(--danger); font-size: 0.85rem; font-weight: 700; margin-top: 12px; text-align: center;"></div>
+      </div>
+
+      <!-- Student Logged-In Scanner Box (NO ADVISOR PORTAL BUTTON VISIBLE) -->
+      <div id="studentScannerBox" style="display: none;">
+        <div class="auth-bar" style="text-align: left;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong id="studentGreeting" style="font-size: 1rem;"></strong>
+              <span class="badge badge-student">Student</span>
+            </div>
+            <span id="studentEmailDisplay" style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-top: 2px;"></span>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="studentLogoutBtn" onclick="handleSignOut()">Sign Out</button>
+        </div>
+
+        <div id="autoCheckInBanner" class="success-banner" style="display: none;"></div>
+
+        <div style="margin: 18px 0;">
+          <button type="button" class="btn" id="startCameraScanBtn" onclick="startStudentScanner()">Scan Meeting QR Code</button>
+          <button type="button" class="btn btn-secondary" id="stopCameraScanBtn" onclick="stopStudentScanner()" style="display: none;">Stop Camera</button>
+        </div>
+
+        <div id="reader" style="max-width: 400px; margin: 0 auto;"></div>
+
+        <div style="max-width: 380px; margin: 24px auto 0; padding-top: 18px; border-top: 1px solid var(--cream);">
+          <p style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 8px;">Or enter the 6-character Session Code shown on the board:</p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="manualSessionCodeInput" placeholder="e.g. K9M2X7" maxlength="6" style="text-transform: uppercase; text-align: center; font-family: monospace; font-size: 1.1rem; letter-spacing: 2px;">
+            <button type="button" class="btn btn-sm" id="manualCodeCheckInBtn" onclick="handleManualCodeCheckIn()">Check In</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL MODAL -->
+  <div class="modal-overlay" id="emailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Review &amp; Email Missing Members</h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">Excused members are unchecked automatically</span>
+      </div>
+      <div class="modal-body" id="modalChecklist"></div>
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">Message Preview (Editable before sending):</label>
+        <textarea id="modalEmailPreview" rows="4" style="margin-top: 4px; font-size: 0.85rem;"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="closeModalBtn" onclick="closeEmailModal()">Cancel</button>
+        <button type="button" class="btn btn-email" id="sendEmailBtn" onclick="handleSendEmail()">Open in Gmail (BCC)</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>CheckSync • School &amp; Club Attendance Suite</footer>
+
+  <!-- FIREBASE COMPAT SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // =========================================================
+    // GLOBAL STATE & UI NAVIGATION
+    // =========================================================
+    var signupRosterMode = 'upload';
+    var pendingUploadedRoster = [];
+    var isSigningUpNow = false;
+    var intendedPortalRole = 'advisor'; // 'advisor' or 'student'
+    var currentUser = null;
+    var currentUserRole = null;
+    var currentMissingMembers = [];
+    var currentPresentEmails = [];
+    var activeQrSessionCode = null;
+    var liveSessionAttendees = [];
+    var qrSessionUnsubscribe = null;
+    var html5QrCode = null;
+
+    var clubData = {
+      clubName: 'My Club',
+      advisorName: 'Club Advisor',
+      members: [],
+      sessions: [],
+      activeQrSessionCode: null,
+      emailTemplate: {
+        subject: 'Missing {ClubName} Meeting ({Date})',
+        body: 'Hi,\n\nOur records show that you missed today\'s {ClubName} meeting on {Date}. Please reply if you had an excused absence.\n\nBest,\n{AdvisorName}'
+      }
+    };
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var pendingQrCodeFromUrl = urlParams.get('checkin');
+
+    function encodeEmailKey(email) {
+      return email.trim().toLowerCase().replace(/\./g, '_dot_').replace(/@/g, '_at_');
+    }
+
+    function switchPortal(mode) {
+      // Prevent switching portals if already logged in
+      if (currentUser && currentUserRole) return;
+
+      var staffBtn = document.getElementById('switchStaffBtn');
+      var studentBtn = document.getElementById('switchStudentBtn');
+      var staffDiv = document.getElementById('staffPortal');
+      var studentDiv = document.getElementById('studentPortal');
+
+      if (mode === 'student') {
+        intendedPortalRole = 'student';
+        studentBtn.classList.add('active');
+        staffBtn.classList.remove('active');
+        studentDiv.style.display = 'block';
+        staffDiv.style.display = 'none';
+      } else {
+        intendedPortalRole = 'advisor';
+        staffBtn.classList.add('active');
+        studentBtn.classList.remove('active');
+        staffDiv.style.display = 'block';
+        studentDiv.style.display = 'none';
+        stopStudentScanner();
+      }
+    }
+
+    function showStaffSignup() {
+      intendedPortalRole = 'advisor';
+      document.getElementById('staffLoginCard').style.display = 'none';
+      document.getElementById('staffSignupCard').style.display = 'block';
+      document.getElementById('staffLoginError').textContent = '';
+      var rowsContainer = document.getElementById('signupManualRows');
+      if (rowsContainer && rowsContainer.children.length === 0) {
+        addSignupManualRow();
+        addSignupManualRow();
+        addSignupManualRow();
+      }
+    }
+
+    function showStaffLogin() {
+      intendedPortalRole = 'advisor';
+      document.getElementById('staffSignupCard').style.display = 'none';
+      document.getElementById('staffLoginCard').style.display = 'block';
+      document.getElementById('staffSignupError').textContent = '';
+    }
+
+    function showStudentSignup() {
+      intendedPortalRole = 'student';
+      document.getElementById('studentLoginBox').style.display = 'none';
+      document.getElementById('studentSignupBox').style.display = 'block';
+      document.getElementById('studentLoginError').textContent = '';
+    }
+
+    function showStudentLogin() {
+      intendedPortalRole = 'student';
+      document.getElementById('studentSignupBox').style.display = 'none';
+      document.getElementById('studentLoginBox').style.display = 'block';
+      document.getElementById('studentSignupError').textContent = '';
+    }
+
+    function setSignupRosterMode(mode) {
+      signupRosterMode = mode;
+      var upTab = document.getElementById('signupTabUpload');
+      var manTab = document.getElementById('signupTabManual');
+      var skipTab = document.getElementById('signupTabSkip');
+      var upPane = document.getElementById('signupUploadPane');
+      var manPane = document.getElementById('signupManualPane');
+      var skipPane = document.getElementById('signupSkipPane');
+
+      upTab.classList.remove('active');
+      manTab.classList.remove('active');
+      skipTab.classList.remove('active');
+      upPane.style.display = 'none';
+      manPane.style.display = 'none';
+      skipPane.style.display = 'none';
+
+      if (mode === 'manual') {
+        manTab.classList.add('active');
+        manPane.style.display = 'block';
+        if (document.getElementById('signupManualRows').children.length === 0) {
+          addSignupManualRow();
+          addSignupManualRow();
+          addSignupManualRow();
+        }
+      } else if (mode === 'skip') {
+        skipTab.classList.add('active');
+        skipPane.style.display = 'block';
+      } else {
+        upTab.classList.add('active');
+        upPane.style.display = 'block';
+      }
+    }
+
+    function addSignupManualRow() {
+      var container = document.getElementById('signupManualRows');
+      var row = document.createElement('div');
+      row.className = 'grid-2 signup-manual-row';
+      row.innerHTML =
+        '<input type="text" class="sm-name" placeholder="Student Full Name (e.g. Alex Rivera)">' +
+        '<div style="display: flex; gap: 6px;">' +
+          '<input type="email" class="sm-email" placeholder="Student Email (alex.rivera@school.org)">' +
+          '<button type="button" class="btn btn-danger btn-sm" onclick="this.closest(\'.signup-manual-row\').remove()">✕</button>' +
+        '</div>';
+      container.appendChild(row);
+    }
+
+    function switchDashboardTab(tabId, btnElem) {
+      var tabs = document.querySelectorAll('.nav-tab');
+      for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+      if (btnElem) btnElem.classList.add('active');
+
+      var panes = document.querySelectorAll('.dashboard-pane');
+      for (var j = 0; j < panes.length; j++) panes[j].style.display = 'none';
+      document.getElementById(tabId).style.display = 'block';
+
+      if (tabId === 'tabRoster') renderRosterEditor();
+      if (tabId === 'tabHistory') renderHistoryAndStanding();
+    }
+
+    if (pendingQrCodeFromUrl) {
+      switchPortal('student');
+      var codeInput = document.getElementById('manualSessionCodeInput');
+      if (codeInput) codeInput.value = pendingQrCodeFromUrl.toUpperCase();
+    }
+
+    // =========================================================
+    // FIREBASE INITIALIZATION & STRICT ROLE SEPARATION
+    // =========================================================
+    var auth = null;
+    var db = null;
+
+    var firebaseConfig = {
+      apiKey: "AIzaSyBkeNN18CV1FnPgRscYsffB7PwxUTq0qao",
+      authDomain: "attendcheck-158f1.firebaseapp.com",
+      projectId: "attendcheck-158f1",
+      storageBucket: "attendcheck-158f1.firebasestorage.app",
+      messagingSenderId: "696462223856",
+      appId: "1:696462223856:web:34cdc26e5e98f99a995535"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    auth = firebase.auth();
+    db = firebase.firestore();
+
+    async function getRegisteredEmailRole(email) {
+      try {
+        var docSnap = await db.collection("email_roles").doc(encodeEmailKey(email)).get();
+        if (docSnap.exists) {
+          return docSnap.data().role; // 'advisor' or 'student'
+        }
+      } catch (e) {
+        console.warn("email_roles lookup:", e);
+      }
+      return null;
+    }
+
+    auth.onAuthStateChanged(async function(user) {
+      if (isSigningUpNow) return;
+
+      if (!user) {
+        // LOGGED OUT STATE: Show portal switcher, reset both portals to login view
+        currentUser = null;
+        currentUserRole = null;
+        if (qrSessionUnsubscribe) {
+          qrSessionUnsubscribe();
+          qrSessionUnsubscribe = null;
+        }
+        document.getElementById('portalSwitcher').style.display = 'flex';
+        document.getElementById('staffLoginCard').style.display = 'block';
+        document.getElementById('staffSignupCard').style.display = 'none';
+        document.getElementById('appDashboard').style.display = 'none';
+
+        document.getElementById('studentLoginBox').style.display = 'block';
+        document.getElementById('studentSignupBox').style.display = 'none';
+        document.getElementById('studentScannerBox').style.display = 'none';
+        return;
+      }
+
+      currentUser = user;
+      var emailLower = (user.email || '').toLowerCase();
+
+      // Determine user's locked role from Firestore
+      var resolvedRole = null;
+      try {
+        var userDoc = await db.collection("users").doc(user.uid).get();
+        if (userDoc.exists && userDoc.data().role) {
+          resolvedRole = userDoc.data().role;
+        } else {
+          // Legacy account fallback: check if they already have a clubs/{uid} document
+          var clubSnap = await db.collection("clubs").doc(user.uid).get();
+          if (clubSnap.exists) {
+            resolvedRole = 'advisor';
+          } else {
+            resolvedRole = intendedPortalRole || 'student';
+          }
+          // Permanently lock this email & UID to that role in Firestore
+          await db.collection("users").doc(user.uid).set({
+            uid: user.uid,
+            email: emailLower,
+            role: resolvedRole,
+            name: user.displayName || emailLower.split('@')[0],
+            createdAt: new Date().toISOString()
+          });
+          await db.collection("email_roles").doc(encodeEmailKey(emailLower)).set({
+            uid: user.uid,
+            email: emailLower,
+            role: resolvedRole
+          });
+        }
+      } catch (err) {
+        console.error("Role lookup error:", err);
+        resolvedRole = intendedPortalRole;
+      }
+
+      // Enforce strict portal separation
+      if (resolvedRole === 'advisor' && intendedPortalRole === 'student') {
+        await auth.signOut();
+        switchPortal('student');
+        document.getElementById('studentLoginError').textContent =
+          'This email is registered as an Advisor/Officer account. It cannot be used on the Student portal.';
+        return;
+      }
+      if (resolvedRole === 'student' && intendedPortalRole === 'advisor') {
+        await auth.signOut();
+        switchPortal('staff');
+        document.getElementById('staffLoginError').textContent =
+          'This email is registered as a Student account. It cannot be used on the Advisor portal.';
+        return;
+      }
+
+      currentUserRole = resolvedRole;
+
+      // HIDE TOP PORTAL SWITCHER SO LOGGED-IN USER CANNOT SWITCH PORTALS
+      document.getElementById('portalSwitcher').style.display = 'none';
+
+      if (resolvedRole === 'advisor') {
+        document.getElementById('staffPortal').style.display = 'block';
+        document.getElementById('studentPortal').style.display = 'none';
+        document.getElementById('staffLoginCard').style.display = 'none';
+        document.getElementById('staffSignupCard').style.display = 'none';
+
+        try {
+          var snap = await db.collection("clubs").doc(user.uid).get();
+          if (snap.exists) {
+            clubData = Object.assign({}, clubData, snap.data());
+          }
+        } catch (e) {
+          console.warn("Club fetch note:", e);
+        }
+        showDashboard(user.email);
+      } else {
+        document.getElementById('studentPortal').style.display = 'block';
+        document.getElementById('staffPortal').style.display = 'none';
+        document.getElementById('studentLoginBox').style.display = 'none';
+        document.getElementById('studentSignupBox').style.display = 'none';
+        document.getElementById('studentScannerBox').style.display = 'block';
+        document.getElementById('studentGreeting').textContent = user.displayName || emailLower.split('@')[0];
+        document.getElementById('studentEmailDisplay').textContent = emailLower;
+
+        if (pendingQrCodeFromUrl) {
+          await processStudentQrCheckIn(pendingQrCodeFromUrl);
+        }
+      }
+    });
+
+    function formatAuthError(error) {
+      var code = error && error.code ? error.code : String(error);
+      switch (code) {
+        case 'auth/invalid-credential':
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          return 'Incorrect email or password.';
+        case 'auth/email-already-in-use':
+          return 'An account with this email already exists. Please log in instead.';
+        case 'auth/weak-password':
+          return 'Password must be at least 6 characters long.';
+        case 'auth/invalid-email':
+          return 'Please enter a valid email address.';
+        default:
+          return error && error.message ? error.message : 'Error: ' + code;
+      }
+    }
+
+    // =========================================================
+    // ADVISOR SIGN UP & LOG IN
+    // =========================================================
+    async function handleStaffLogin() {
+      intendedPortalRole = 'advisor';
+      var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      var password = document.getElementById('loginPassword').value;
+      var errBox = document.getElementById('staffLoginError');
+      errBox.textContent = '';
+
+      if (!email || !password) {
+        errBox.textContent = 'Please enter both your advisor email and password.';
+        return;
+      }
+
+      var existingRole = await getRegisteredEmailRole(email);
+      if (existingRole === 'student') {
+        errBox.textContent = 'This email belongs to a Student account. Please use the Student QR Check-In portal.';
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password).catch(function(err) {
+        errBox.textContent = formatAuthError(err);
+      });
+    }
+
+    async function handleCompleteStaffSignup() {
+      intendedPortalRole = 'advisor';
+      var clubName = document.getElementById('signupClubName').value.trim();
+      var advisorName = document.getElementById('signupAdvisorName').value.trim();
+      var email = document.getElementById('signupEmail').value.trim().toLowerCase();
+      var password = document.getElementById('signupPassword').value;
+      var errBox = document.getElementById('staffSignupError');
+      var submitBtn = document.getElementById('completeStaffSignupBtn');
+      errBox.textContent = '';
+
+      if (!clubName || !advisorName || !email || !password) {
+        errBox.textContent = 'Please fill out Club Name, Advisor Name, Email, and Password.';
+        return;
+      }
+      if (password.length < 6) {
+        errBox.textContent = 'Password must be at least 6 characters.';
+        return;
+      }
+
+      var initialMembers = [];
+      if (signupRosterMode === 'upload') {
+        if (pendingUploadedRoster.length === 0) {
+          errBox.textContent = 'Please upload a CSV/Excel file, or choose "Type Manually" / "Add Later".';
+          return;
+        }
+        initialMembers = pendingUploadedRoster;
+      } else if (signupRosterMode === 'manual') {
+        var rows = document.querySelectorAll('.signup-manual-row');
+        for (var i = 0; i < rows.length; i++) {
+          var n = rows[i].querySelector('.sm-name').value.trim();
+          var em = rows[i].querySelector('.sm-email').value.trim().toLowerCase();
+          if (em && em.indexOf('@') !== -1) {
+            initialMembers.push(parseEmailToMember(em, n));
+          }
+        }
+        if (initialMembers.length === 0) {
+          errBox.textContent = 'Please enter at least one valid student email, or select "Add Later".';
+          return;
+        }
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Advisor Account...';
+
+      try {
+        // Check if email is already tied to another role
+        var existingRole = await getRegisteredEmailRole(email);
+        if (existingRole === 'student') {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Advisor Account & Launch Dashboard';
+          errBox.textContent = 'This email is already registered as a Student account. An email can only be tied to one role.';
+          return;
+        }
+        if (existingRole === 'advisor') {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Advisor Account & Launch Dashboard';
+          errBox.textContent = 'An Advisor account with this email already exists. Please go back and log in.';
+          return;
+        }
+
+        isSigningUpNow = true;
+        // 1. Save email & password in Firebase Authentication so advisor can log back in anytime
+        var cred = await auth.createUserWithEmailAndPassword(email, password);
+        await cred.user.updateProfile({ displayName: advisorName });
+
+        // 2. Save role & profile metadata in Firestore
+        await db.collection("users").doc(cred.user.uid).set({
+          uid: cred.user.uid,
+          email: email,
+          role: 'advisor',
+          name: advisorName,
+          clubName: clubName,
+          createdAt: new Date().toISOString()
+        });
+
+        await db.collection("email_roles").doc(encodeEmailKey(email)).set({
+          uid: cred.user.uid,
+          email: email,
+          role: 'advisor'
+        });
+
+        clubData.clubName = clubName;
+        clubData.advisorName = advisorName;
+        clubData.members = initialMembers;
+        clubData.sessions = [];
+        clubData.activeQrSessionCode = null;
+
+        await db.collection("clubs").doc(cred.user.uid).set(
+          Object.assign({}, clubData, { updatedAt: new Date().toISOString() })
+        );
+
+        isSigningUpNow = false;
+        currentUser = cred.user;
+        currentUserRole = 'advisor';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Advisor Account & Launch Dashboard';
+
+        document.getElementById('portalSwitcher').style.display = 'none';
+        document.getElementById('staffSignupCard').style.display = 'none';
+        showDashboard(cred.user.email);
+      } catch (err) {
+        isSigningUpNow = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Advisor Account & Launch Dashboard';
+        errBox.textContent = formatAuthError(err);
+      }
+    }
+
+    // =========================================================
+    // STUDENT SIGN UP & LOG IN
+    // =========================================================
+    async function handleStudentLogin() {
+      intendedPortalRole = 'student';
+      var email = document.getElementById('studentLoginEmail').value.trim().toLowerCase();
+      var password = document.getElementById('studentLoginPassword').value;
+      var errBox = document.getElementById('studentLoginError');
+      errBox.textContent = '';
+
+      if (!email || !password) {
+        errBox.textContent = 'Please enter your student email and password.';
+        return;
+      }
+
+      var existingRole = await getRegisteredEmailRole(email);
+      if (existingRole === 'advisor') {
+        errBox.textContent = 'This email belongs to an Advisor/Officer account. Please use the Advisor & Officer Portal.';
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password).catch(function(err) {
+        errBox.textContent = formatAuthError(err);
+      });
+    }
+
+    async function handleStudentSignup() {
+      intendedPortalRole = 'student';
+      var fullName = document.getElementById('studentSignupName').value.trim();
+      var email = document.getElementById('studentSignupEmail').value.trim().toLowerCase();
+      var password = document.getElementById('studentSignupPassword').value;
+      var errBox = document.getElementById('studentSignupError');
+      var submitBtn = document.getElementById('studentSignupSubmitBtn');
+      errBox.textContent = '';
+
+      if (!fullName || !email || !password) {
+        errBox.textContent = 'Please enter your full name, school email, and password.';
+        return;
+      }
+      if (password.length < 6) {
+        errBox.textContent = 'Password must be at least 6 characters.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Student Account...';
+
+      try {
+        var existingRole = await getRegisteredEmailRole(email);
+        if (existingRole === 'advisor') {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Student Account';
+          errBox.textContent = 'This email is already registered as an Advisor/Officer account. An email can only be tied to one role.';
+          return;
+        }
+        if (existingRole === 'student') {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Student Account';
+          errBox.textContent = 'A Student account with this email already exists. Please go back and log in.';
+          return;
+        }
+
+        isSigningUpNow = true;
+        var cred = await auth.createUserWithEmailAndPassword(email, password);
+        await cred.user.updateProfile({ displayName: fullName });
+
+        await db.collection("users").doc(cred.user.uid).set({
+          uid: cred.user.uid,
+          email: email,
+          role: 'student',
+          name: fullName,
+          createdAt: new Date().toISOString()
+        });
+
+        await db.collection("email_roles").doc(encodeEmailKey(email)).set({
+          uid: cred.user.uid,
+          email: email,
+          role: 'student'
+        });
+
+        await db.collection("students").doc(cred.user.uid).set({
+          name: fullName,
+          email: email,
+          createdAt: new Date().toISOString()
+        });
+
+        isSigningUpNow = false;
+        currentUser = cred.user;
+        currentUserRole = 'student';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Student Account';
+
+        document.getElementById('portalSwitcher').style.display = 'none';
+        document.getElementById('studentLoginBox').style.display = 'none';
+        document.getElementById('studentSignupBox').style.display = 'none';
+        document.getElementById('studentScannerBox').style.display = 'block';
+        document.getElementById('studentGreeting').textContent = fullName;
+        document.getElementById('studentEmailDisplay').textContent = email;
+
+        if (pendingQrCodeFromUrl) {
+          await processStudentQrCheckIn(pendingQrCodeFromUrl);
+        }
+      } catch (err) {
+        isSigningUpNow = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Student Account';
+        errBox.textContent = formatAuthError(err);
+      }
+    }
+
+    async function handleSignOut() {
+      var wasStudent = (currentUserRole === 'student' || intendedPortalRole === 'student');
+      try {
+        stopStudentScanner();
+      } catch (e) {
+        console.warn('Scanner stop cleanup:', e);
+      }
+      if (qrSessionUnsubscribe) {
+        try { qrSessionUnsubscribe(); } catch (e) {}
+        qrSessionUnsubscribe = null;
+      }
+
+      pendingQrCodeFromUrl = null;
+      currentUser = null;
+      currentUserRole = null;
+
+      var banner = document.getElementById('autoCheckInBanner');
+      if (banner) {
+        banner.style.display = 'none';
+        banner.textContent = '';
+      }
+      var manualInput = document.getElementById('manualSessionCodeInput');
+      if (manualInput) manualInput.value = '';
+      var studentPassInput = document.getElementById('studentLoginPassword');
+      if (studentPassInput) studentPassInput.value = '';
+      var staffPassInput = document.getElementById('loginPassword');
+      if (staffPassInput) staffPassInput.value = '';
+
+      if (auth) {
+        try {
+          await auth.signOut();
+        } catch (err) {
+          console.error('Sign out error:', err);
+        }
+      }
+
+      document.getElementById('portalSwitcher').style.display = 'flex';
+      if (wasStudent) {
+        switchPortal('student');
+        showStudentLogin();
+        document.getElementById('studentScannerBox').style.display = 'none';
+      } else {
+        switchPortal('staff');
+        showStaffLogin();
+        document.getElementById('appDashboard').style.display = 'none';
+      }
+    }
+
+    async function saveClubDataToFirestore() {
+      if (!currentUser || !db) return;
+      await db.collection("clubs").doc(currentUser.uid).set(
+        Object.assign({}, clubData, { updatedAt: new Date().toISOString() }),
+        { merge: true }
+      );
+      if (activeQrSessionCode) {
+        renderLiveSessionDropdowns();
+      }
+    }
+
+    // =========================================================
+    // SPREADSHEET PARSING & MEMBER HELPERS
+    // =========================================================
+    function capitalizeWord(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function capitalizeName(str) {
+      if (!str) return '';
+      return str.split(/\s+/).map(capitalizeWord).join(' ');
+    }
+
+    function parseEmailToMember(emailStr, explicitName) {
+      var cleanEmail = emailStr.trim().toLowerCase();
+      if (explicitName) {
+        var parts = explicitName.trim().split(/\s+/);
+        var first = capitalizeName(parts[0] || '');
+        var last = capitalizeName(parts.slice(1).join(' ') || '');
+        return { email: cleanEmail, first: first, last: last, name: capitalizeName(explicitName), excused: false };
+      }
+      var username = cleanEmail.split('@')[0];
+      var uParts = username.split('.');
+      var uFirst = capitalizeName(uParts[0] || '');
+      var uLast = capitalizeName(uParts.slice(1).join(' ') || '');
+      var fullName = (uFirst + ' ' + uLast).trim() || cleanEmail;
+      return { email: cleanEmail, first: uFirst, last: uLast, name: fullName, excused: false };
+    }
+
+    function parseSpreadsheetFile(file, callback) {
+      var ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'xlsx' || ext === 'xls') {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var data = new Uint8Array(e.target.result);
+          var workbook = XLSX.read(data, { type: 'array' });
+          var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          var rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+          callback(rows);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        Papa.parse(file, {
+          header: false,
+          skipEmptyLines: true,
+          complete: function(results) { callback(results.data); }
+        });
+      }
+    }
+
+    function extractMembersFromRows(rows) {
+      var parsedMembers = [];
+      var seenEmails = {};
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var cells = Array.isArray(row) ? row : Object.values(row);
+        var rowText = cells.join(' ');
+        var emailMatch = rowText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) {
+          var email = emailMatch[0].toLowerCase();
+          if (!seenEmails[email]) {
+            seenEmails[email] = true;
+            var nameCell = '';
+            for (var j = 0; j < cells.length; j++) {
+              var c = cells[j];
+              if (typeof c === 'string' && c.indexOf('@') === -1 && c.trim().split(/\s+/).length >= 2) {
+                nameCell = c;
+                break;
+              }
+            }
+            parsedMembers.push(parseEmailToMember(email, nameCell));
+          }
+        }
+      }
+      return parsedMembers;
+    }
+
+    function handleSignupFileUpload(input) {
+      var file = input.files[0];
+      if (!file) return;
+      var nameElem = document.getElementById('signupRosterFileName');
+      nameElem.textContent = file.name;
+      nameElem.classList.remove('empty');
+
+      parseSpreadsheetFile(file, function(rows) {
+        pendingUploadedRoster = extractMembersFromRows(rows);
+        if (pendingUploadedRoster.length === 0) {
+          alert('No valid student emails were found in that spreadsheet.');
+        } else {
+          nameElem.textContent = file.name + ' (' + pendingUploadedRoster.length + ' members ready)';
+        }
+      });
+    }
+
+    // =========================================================
+    // DASHBOARD, LIVE QR HOSTING & REAL-TIME FEED
+    // =========================================================
+    function showDashboard(email) {
+      document.getElementById('staffLoginCard').style.display = 'none';
+      document.getElementById('staffSignupCard').style.display = 'none';
+      document.getElementById('appDashboard').style.display = 'block';
+      document.getElementById('clubTitleDisplay').textContent = clubData.clubName || 'Club Dashboard';
+      document.getElementById('userGreeting').textContent = (clubData.advisorName || 'Advisor') + ' (' + email + ')';
+      updateRosterCountLabel();
+      populateSettingsForm();
+
+      // Resume active QR session automatically if one is open
+      if (clubData.activeQrSessionCode) {
+        resumeQrSession(clubData.activeQrSessionCode);
+      }
+    }
+
+    function updateRosterCountLabel() {
+      var members = clubData.members || [];
+      var excusedCount = members.filter(function(m) { return m.excused; }).length;
+      document.getElementById('rosterCount').textContent =
+        'Roster: ' + members.length + ' members (' + excusedCount + ' pre-excused)';
+    }
+
+    function generateUniqueCode() {
+      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var code = '';
+      for (var i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    async function handleStartQrSession() {
+      var startBtn = document.getElementById('startQrSessionBtn');
+      startBtn.disabled = true;
+      startBtn.textContent = 'Generating...';
+
+      try {
+        if (!currentUser) {
+          alert('You must be signed in as an advisor to start a QR session.');
+          return;
+        }
+
+        var code = generateUniqueCode();
+        activeQrSessionCode = code;
+        liveSessionAttendees = [];
+        var label = document.getElementById('meetingTitleInput').value.trim() || ('Meeting ' + new Date().toLocaleDateString());
+
+        await db.collection("qr_sessions").doc(code).set({
+          code: code,
+          clubUid: currentUser.uid,
+          clubName: clubData.clubName,
+          label: label,
+          active: true,
+          createdAt: new Date().toISOString(),
+          stoppedAt: null,
+          attendees: []
+        });
+
+        clubData.activeQrSessionCode = code;
+        await saveClubDataToFirestore();
+
+        renderQrSessionUI(code, true);
+        attachLiveSessionListener(code);
+      } catch (err) {
+        if (err && (err.code === 'permission-denied' || String(err.message).toLowerCase().indexOf('permission') !== -1)) {
+          alert('Firebase Permission Error: Your Firestore Database Rules are currently blocking qr_sessions.\n\nOpen Firebase Console -> Firestore Database -> Rules, paste the updated rules, and click Publish.');
+        } else {
+          alert('Error starting QR session: ' + (err.message || err));
+        }
+      } finally {
+        startBtn.disabled = false;
+        startBtn.textContent = 'Generate Unique QR & Session Code';
+      }
+    }
+
+    async function resumeQrSession(code) {
+      var snap = await db.collection("qr_sessions").doc(code).get();
+      if (!snap.exists) {
+        clubData.activeQrSessionCode = null;
+        await saveClubDataToFirestore();
+        return;
+      }
+      var data = snap.data();
+      activeQrSessionCode = code;
+      liveSessionAttendees = data.attendees || [];
+      renderQrSessionUI(code, data.active !== false);
+      attachLiveSessionListener(code);
+    }
+
+    function renderQrSessionUI(code, isActive) {
+      var baseUrl = window.location.href.split('?')[0];
+      var checkinUrl = baseUrl + '?checkin=' + code;
+
+      document.getElementById('qrSetupControls').style.display = 'none';
+      document.getElementById('qrDisplayArea').style.display = 'block';
+      document.getElementById('qrSessionCodeText').textContent = code;
+      document.getElementById('closedSessionCodeLabel').textContent = code;
+
+      var linkElem = document.getElementById('qrDirectLink');
+      linkElem.href = checkinUrl;
+      linkElem.textContent = checkinUrl;
+
+      var pill = document.getElementById('sessionStatusPill');
+      var feedSection = document.getElementById('liveSessionFeedSection');
+      if (isActive) {
+        pill.className = 'live-pill active';
+        pill.innerHTML = '<span class="live-dot"></span> Session Active — Accepting Check-Ins';
+        document.getElementById('activeQrVisuals').style.display = 'block';
+        document.getElementById('stoppedQrControls').style.display = 'none';
+        if (feedSection) feedSection.style.display = 'block';
+
+        var qrContainer = document.getElementById('qrcodeContainer');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+          text: checkinUrl,
+          width: 210,
+          height: 210,
+          colorDark: "#2E3328",
+          colorLight: "#FFFFFF"
+        });
+      } else {
+        pill.className = 'live-pill stopped';
+        pill.textContent = '■ Session Stopped — Check-In Closed';
+        document.getElementById('activeQrVisuals').style.display = 'none';
+        document.getElementById('stoppedQrControls').style.display = 'block';
+        if (feedSection) feedSection.style.display = 'none';
+        var pDrop = document.getElementById('livePresentDropdown');
+        var mDrop = document.getElementById('liveMissingDropdown');
+        if (pDrop) pDrop.removeAttribute('open');
+        if (mDrop) mDrop.removeAttribute('open');
+      }
+    }
+
+    function isMemberCheckedInLive(member, attendees) {
+      var mEmail = cleanStr(member.email);
+      var mFirst = cleanStr(member.first);
+      var mLast = cleanStr(member.last);
+      for (var i = 0; i < attendees.length; i++) {
+        var a = attendees[i];
+        var aEmail = cleanStr(a.email);
+        var aName = cleanStr(a.name);
+        if (mEmail && aEmail && mEmail === aEmail) return true;
+        if (mFirst && mLast && aName && aName.indexOf(mFirst) !== -1 && aName.indexOf(mLast) !== -1) return true;
+      }
+      return false;
+    }
+
+    function renderLiveSessionDropdowns() {
+      var attendees = liveSessionAttendees || [];
+      var roster = clubData.members || [];
+
+      var presentCountEl = document.getElementById('livePresentCount');
+      var missingCountEl = document.getElementById('liveMissingCount');
+      var presentListEl = document.getElementById('livePresentList');
+      var missingListEl = document.getElementById('liveMissingList');
+      if (!presentCountEl || !missingCountEl || !presentListEl || !missingListEl) return;
+
+      presentCountEl.textContent = attendees.length;
+
+      if (attendees.length === 0) {
+        presentListEl.innerHTML = '<li style="color: var(--text-muted);">Waiting for students to check in...</li>';
+      } else {
+        var reversed = attendees.slice().reverse();
+        presentListEl.innerHTML = reversed.map(function(a) {
+          var isOnRoster = roster.some(function(m) {
+            return cleanStr(m.email) === cleanStr(a.email) ||
+              (cleanStr(m.first) && cleanStr(m.last) && cleanStr(a.name).indexOf(cleanStr(m.first)) !== -1 && cleanStr(a.name).indexOf(cleanStr(m.last)) !== -1);
+          });
+          var rosterBadge = isOnRoster
+            ? '<span class="badge badge-excused">Roster Member</span>'
+            : '<span class="badge badge-ok">Guest / Unlisted</span>';
+          return '<li>' +
+            '<div>' +
+              '<strong>' + (a.name || a.email) + '</strong> ' + rosterBadge +
+              '<div style="font-size:0.8rem;color:var(--text-muted);">' + a.email + '</div>' +
+            '</div>' +
+            '<span style="font-size:0.82rem;font-weight:700;color:var(--olive-dark);">' + (a.time || '') + '</span>' +
+          '</li>';
+        }).join('');
+      }
+
+      var missingMembers = roster.filter(function(m) {
+        return !isMemberCheckedInLive(m, attendees);
+      });
+      missingCountEl.textContent = missingMembers.length;
+
+      if (roster.length === 0) {
+        missingListEl.innerHTML = '<li style="color: var(--text-muted);">No club roster added yet. Add members in Manage Roster to track missing members.</li>';
+      } else if (missingMembers.length === 0) {
+        missingListEl.innerHTML = '<li style="color: var(--olive-dark);">All roster members are present!</li>';
+      } else {
+        missingListEl.innerHTML = missingMembers.map(function(m) {
+          var statusBadge = m.excused
+            ? '<span class="badge badge-excused">Excused</span>'
+            : '<span class="badge badge-strike">Not Checked In</span>';
+          return '<li>' +
+            '<div>' +
+              '<strong>' + m.name + '</strong> ' + statusBadge +
+              '<div style="font-size:0.8rem;color:var(--text-muted);">' + m.email + '</div>' +
+            '</div>' +
+          '</li>';
+        }).join('');
+      }
+    }
+
+    function attachLiveSessionListener(code) {
+      if (qrSessionUnsubscribe) {
+        qrSessionUnsubscribe();
+      }
+      renderLiveSessionDropdowns();
+      // REAL-TIME FIRESTORE LISTENER (NO PAGE REFRESH REQUIRED)
+      qrSessionUnsubscribe = db.collection("qr_sessions").doc(code).onSnapshot(function(docSnap) {
+        if (!docSnap.exists) return;
+        var data = docSnap.data();
+        liveSessionAttendees = data.attendees || [];
+        renderLiveSessionDropdowns();
+      });
+    }
+
+    async function handleStopQrSession() {
+      if (!activeQrSessionCode) return;
+      var stopBtn = document.getElementById('stopQrSessionBtn');
+      stopBtn.disabled = true;
+      stopBtn.textContent = 'Stopping...';
+
+      try {
+        await db.collection("qr_sessions").doc(activeQrSessionCode).update({
+          active: false,
+          stoppedAt: new Date().toISOString()
+        });
+        if (qrSessionUnsubscribe) {
+          qrSessionUnsubscribe();
+          qrSessionUnsubscribe = null;
+        }
+        clubData.activeQrSessionCode = null;
+        await saveClubDataToFirestore();
+
+        renderQrSessionUI(activeQrSessionCode, false);
+      } catch (err) {
+        alert('Error stopping session: ' + err.message);
+      } finally {
+        stopBtn.disabled = false;
+        stopBtn.textContent = 'Stop Session (Close Check-In)';
+      }
+    }
+
+    function resetQrHostForNewSession() {
+      if (qrSessionUnsubscribe) {
+        qrSessionUnsubscribe();
+        qrSessionUnsubscribe = null;
+      }
+      activeQrSessionCode = null;
+      liveSessionAttendees = [];
+      document.getElementById('meetingTitleInput').value = '';
+      document.getElementById('qrDisplayArea').style.display = 'none';
+      document.getElementById('qrSetupControls').style.display = 'block';
+    }
+
+    function handleSyncLiveQr() {
+      if (!liveSessionAttendees || liveSessionAttendees.length === 0) {
+        alert('No QR check-ins recorded yet. Start a session in "Live QR Meeting" first.');
+        return;
+      }
+      var rows = liveSessionAttendees.map(function(a) { return [a.name, a.email]; });
+      evaluateAttendanceFromRows(rows);
+    }
+
+    function handleSyncLiveQrAndSwitch() {
+      handleSyncLiveQr();
+      var attTab = document.querySelector('.nav-tab[data-tab="tabAttendance"]');
+      switchDashboardTab('tabAttendance', attTab);
+    }
+
+    // =========================================================
+    // STUDENT QR SCANNER & MANUAL CODE CHECK-IN
+    // =========================================================
+    function startStudentScanner() {
+      document.getElementById('startCameraScanBtn').style.display = 'none';
+      document.getElementById('stopCameraScanBtn').style.display = 'inline-flex';
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async function(decodedText) {
+          stopStudentScanner();
+          var code = decodedText.trim();
+          if (code.indexOf('checkin=') !== -1) {
+            code = code.split('checkin=')[1].split('&')[0];
+          }
+          await processStudentQrCheckIn(code);
+        }
+      ).catch(function() {
+        alert('Camera permission denied or unavailable. Enter the 6-character Session Code below.');
+        stopStudentScanner();
+      });
+    }
+
+    function stopStudentScanner() {
+      if (html5QrCode) {
+        var scannerInstance = html5QrCode;
+        html5QrCode = null;
+        try {
+          var stopPromise = scannerInstance.stop();
+          if (stopPromise && typeof stopPromise.catch === 'function') {
+            stopPromise.catch(function() {});
+          }
+        } catch (e) {
+          // Ignore synchronous error if scanner was already stopped or never started
+        }
+      }
+      var startBtn = document.getElementById('startCameraScanBtn');
+      var stopBtn = document.getElementById('stopCameraScanBtn');
+      if (startBtn) startBtn.style.display = 'inline-flex';
+      if (stopBtn) stopBtn.style.display = 'none';
+    }
+
+    async function handleManualCodeCheckIn() {
+      var code = document.getElementById('manualSessionCodeInput').value.trim().toUpperCase();
+      if (!code) {
+        alert('Please enter the 6-character session code.');
+        return;
+      }
+      await processStudentQrCheckIn(code);
+    }
+
+    async function processStudentQrCheckIn(rawCode) {
+      var code = rawCode.trim().toUpperCase();
+      if (!currentUser || currentUserRole !== 'student') return;
+
+      var sessionRef = db.collection("qr_sessions").doc(code);
+      var snap = await sessionRef.get();
+      var banner = document.getElementById('autoCheckInBanner');
+      banner.style.display = 'block';
+
+      if (!snap.exists) {
+        banner.style.background = '#FDECEA';
+        banner.style.color = '#C84B31';
+        banner.textContent = 'Invalid session code: ' + code + '. Please check with your advisor.';
+        return;
+      }
+
+      var data = snap.data();
+
+      // Reject check-ins if advisor stopped the session
+      if (data.active === false) {
+        banner.style.background = '#FDECEA';
+        banner.style.color = '#C84B31';
+        banner.textContent = '⛔ This session was stopped by the advisor and is no longer accepting check-ins.';
+        return;
+      }
+
+      var studentEmail = currentUser.email.toLowerCase();
+      var existingAttendees = data.attendees || [];
+      var alreadyCheckedIn = existingAttendees.some(function(a) {
+        return (a.email || '').toLowerCase() === studentEmail;
+      });
+
+      if (alreadyCheckedIn) {
+        banner.style.background = '#D8F3DC';
+        banner.style.color = '#1B4332';
+        banner.textContent = '✅ You are already checked into ' + data.clubName + '!';
+        return;
+      }
+
+      var timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      await sessionRef.update({
+        attendees: firebase.firestore.FieldValue.arrayUnion({
+          uid: currentUser.uid,
+          email: studentEmail,
+          name: currentUser.displayName || studentEmail.split('@')[0],
+          time: timeStr
+        })
+      });
+
+      document.getElementById('manualSessionCodeInput').value = '';
+      banner.style.background = '#D8F3DC';
+      banner.style.color = '#1B4332';
+      banner.textContent = '✅ Checked into ' + data.clubName + ' at ' + timeStr + '!';
+    }
+
+    // =========================================================
+    // ROSTER, ATTENDANCE EVALUATION, HISTORY & EMAIL MODAL
+    // =========================================================
+    function handleUpdateRosterFile(input) {
+      var file = input.files[0];
+      if (!file) return;
+      parseSpreadsheetFile(file, async function(rows) {
+        var parsed = extractMembersFromRows(rows);
+        if (parsed.length === 0) {
+          alert('No valid member emails found in that file.');
+          return;
+        }
+        clubData.members = parsed;
+        await saveClubDataToFirestore();
+        updateRosterCountLabel();
+        renderRosterEditor();
+        alert('Roster updated! ' + clubData.members.length + ' members saved.');
+      });
+    }
+
+    async function handleAddSingleMember() {
+      var name = document.getElementById('newMemberName').value.trim();
+      var email = document.getElementById('newMemberEmail').value.trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) {
+        alert('Please enter a valid student email.');
+        return;
+      }
+      if (clubData.members.some(function(m) { return m.email === email; })) {
+        alert('This student is already on the roster.');
+        return;
+      }
+      clubData.members.push(parseEmailToMember(email, name));
+      document.getElementById('newMemberName').value = '';
+      document.getElementById('newMemberEmail').value = '';
+      await saveClubDataToFirestore();
+      updateRosterCountLabel();
+      renderRosterEditor();
+    }
+
+    function renderRosterEditor() {
+      var list = document.getElementById('rosterEditorList');
+      var query = document.getElementById('rosterSearchInput').value.toLowerCase();
+      list.innerHTML = '';
+
+      if (!clubData.members || clubData.members.length === 0) {
+        list.innerHTML = '<li style="color:var(--text-muted);">No members yet. Add students above or import a spreadsheet.</li>';
+        return;
+      }
+
+      clubData.members.forEach(function(member, index) {
+        if (query && member.name.toLowerCase().indexOf(query) === -1 && member.email.indexOf(query) === -1) return;
+
+        var li = document.createElement('li');
+        li.innerHTML =
+          '<div>' +
+            '<strong>' + member.name + '</strong>' +
+            (member.excused ? '<span class="badge badge-excused" style="margin-left: 8px;">Excused</span>' : '') +
+            '<div style="font-size: 0.8rem; color: var(--text-muted);">' + member.email + '</div>' +
+          '</div>' +
+          '<div style="display: flex; gap: 6px;">' +
+            '<button type="button" class="btn btn-secondary btn-sm" onclick="toggleMemberExcuse(' + index + ')">' +
+              (member.excused ? 'Unmark Excused' : 'Mark Excused') +
+            '</button>' +
+            '<button type="button" class="btn btn-danger btn-sm" onclick="removeMemberAt(' + index + ')">Remove</button>' +
+          '</div>';
+        list.appendChild(li);
+      });
+    }
+
+    async function toggleMemberExcuse(idx) {
+      clubData.members[idx].excused = !clubData.members[idx].excused;
+      await saveClubDataToFirestore();
+      updateRosterCountLabel();
+      renderRosterEditor();
+    }
+
+    async function removeMemberAt(idx) {
+      clubData.members.splice(idx, 1);
+      await saveClubDataToFirestore();
+      updateRosterCountLabel();
+      renderRosterEditor();
+    }
+
+    function handleAttendanceFileUpload(input) {
+      var file = input.files[0];
+      if (!file) return;
+      var nameElem = document.getElementById('fileName');
+      nameElem.textContent = file.name;
+      nameElem.classList.remove('empty');
+
+      parseSpreadsheetFile(file, function(rows) {
+        evaluateAttendanceFromRows(rows);
+        input.value = '';
+      });
+    }
+
+    function cleanStr(str) {
+      return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function evaluateAttendanceFromRows(rows) {
+      if (!clubData.members || clubData.members.length === 0) {
+        alert('Your club roster is empty! Add students in "Manage Roster" first so CheckSync can detect missing members.');
+        return;
+      }
+
+      var attendeeRows = rows.map(function(r) {
+        return cleanStr(Array.isArray(r) ? r.join(' ') : Object.values(r).join(' '));
+      });
+      currentMissingMembers = [];
+      currentPresentEmails = [];
+      var presentCount = 0;
+      var excusedCount = 0;
+
+      clubData.members.forEach(function(member) {
+        var mFirst = cleanStr(member.first);
+        var mLast = cleanStr(member.last);
+        var mEmail = cleanStr(member.email);
+
+        var found = false;
+        for (var i = 0; i < attendeeRows.length; i++) {
+          var rowText = attendeeRows[i];
+          if (!rowText) continue;
+          if ((mEmail && rowText.indexOf(mEmail) !== -1) || (mFirst && mLast && rowText.indexOf(mFirst) !== -1 && rowText.indexOf(mLast) !== -1)) {
+            found = true;
+            break;
+          }
+        }
+
+        if (found) {
+          presentCount++;
+          currentPresentEmails.push(member.email);
+        } else if (member.excused) {
+          excusedCount++;
+        } else {
+          currentMissingMembers.push(member);
+        }
+      });
+
+      renderAttendanceResults(presentCount, excusedCount);
+    }
+
+    function renderAttendanceResults(presentCount, excusedCount) {
+      var totalActive = clubData.members.length - excusedCount;
+      var missingCount = currentMissingMembers.length;
+      var rate = totalActive > 0 ? Math.round((presentCount / totalActive) * 100) : 100;
+
+      document.getElementById('statPresent').textContent = presentCount;
+      document.getElementById('statExcused').textContent = excusedCount;
+      document.getElementById('statMissing').textContent = missingCount;
+      document.getElementById('statRate').textContent = rate + '%';
+      document.getElementById('statsSection').style.display = 'flex';
+
+      var resultsUl = document.getElementById('results');
+      resultsUl.innerHTML = '';
+      resultsUl.style.display = 'block';
+      document.getElementById('count').textContent = missingCount;
+      document.getElementById('resultsHeader').style.display = 'flex';
+
+      var chronicFlags = [];
+      currentMissingMembers.forEach(function(m) {
+        var priorMisses = (clubData.sessions || []).filter(function(s) {
+          return (s.missingEmails || []).indexOf(m.email) !== -1;
+        }).length;
+        if (priorMisses >= 2) chronicFlags.push(m.name + ' (' + (priorMisses + 1) + ' total absences)');
+      });
+
+      var alertBanner = document.getElementById('chronicAlertBanner');
+      if (chronicFlags.length > 0) {
+        alertBanner.style.display = 'block';
+        alertBanner.textContent = '⚠️ Chronic Absence Alert (3+ Strikes): ' + chronicFlags.join(', ');
+      } else {
+        alertBanner.style.display = 'none';
+      }
+
+      if (missingCount === 0) {
+        resultsUl.innerHTML = '<li style="color: var(--olive-dark);">All active club members are present!</li>';
+        document.getElementById('openEmailModalBtn').style.display = 'none';
+      } else {
+        document.getElementById('openEmailModalBtn').style.display = 'inline-flex';
+        currentMissingMembers.forEach(function(member) {
+          var priorMisses = (clubData.sessions || []).filter(function(s) {
+            return (s.missingEmails || []).indexOf(member.email) !== -1;
+          }).length;
+          var strikeBadge = priorMisses >= 2 ? '<span class="badge badge-strike">' + (priorMisses + 1) + ' Misses</span>' : '';
+          var li = document.createElement('li');
+          li.innerHTML =
+            '<div>' +
+              '<span>' + member.name + '</span> ' + strikeBadge +
+              '<div style="font-size: 0.8rem; color: var(--text-muted);">' + member.email + '</div>' +
+            '</div>' +
+            '<span style="font-size: 0.8rem; color: var(--terracotta);">Unexcused</span>';
+          resultsUl.appendChild(li);
+        });
+      }
+    }
+
+    async function handleSaveSession() {
+      var todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      var excusedEmails = clubData.members.filter(function(m) { return m.excused; }).map(function(m) { return m.email; });
+      var missingEmails = currentMissingMembers.map(function(m) { return m.email; });
+      var rate = document.getElementById('statRate').textContent;
+
+      clubData.sessions = clubData.sessions || [];
+      clubData.sessions.unshift({
+        id: Date.now().toString(),
+        date: todayStr,
+        label: document.getElementById('meetingTitleInput').value.trim() || ('Meeting (' + todayStr + ')'),
+        presentEmails: currentPresentEmails,
+        excusedEmails: excusedEmails,
+        missingEmails: missingEmails,
+        rate: rate
+      });
+
+      await saveClubDataToFirestore();
+      alert('Attendance log for ' + todayStr + ' saved to permanent club history!');
+    }
+
+    function handleExportDailyReport() {
+      var todayStr = new Date().toISOString().split('T')[0];
+      var rows = [['Club Name', 'Date', 'Student Name', 'Email', 'Status']];
+      clubData.members.forEach(function(m) {
+        var status = 'Unexcused Absence';
+        if (currentPresentEmails.indexOf(m.email) !== -1) status = 'Present';
+        else if (m.excused) status = 'Excused';
+        rows.push([clubData.clubName, todayStr, m.name, m.email, status]);
+      });
+      downloadCsv(rows, clubData.clubName.replace(/\s+/g, '_') + '_Attendance_' + todayStr + '.csv');
+    }
+
+    function downloadCsv(rows, filename) {
+      var csvContent = rows.map(function(r) {
+        return r.map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    function renderHistoryAndStanding() {
+      var standingList = document.getElementById('memberStandingList');
+      var historyList = document.getElementById('sessionHistoryList');
+      var sessions = clubData.sessions || [];
+
+      standingList.innerHTML = '';
+      clubData.members.forEach(function(m) {
+        var missedCount = sessions.filter(function(s) {
+          return (s.missingEmails || []).indexOf(m.email) !== -1;
+        }).length;
+        var badge = missedCount >= 3
+          ? '<span class="badge badge-strike">' + missedCount + ' Unexcused</span>'
+          : '<span class="badge badge-ok">' + missedCount + ' Unexcused</span>';
+        var li = document.createElement('li');
+        li.innerHTML = '<span>' + m.name + ' <small style="color:var(--text-muted);">(' + m.email + ')</small></span>' + badge;
+        standingList.appendChild(li);
+      });
+
+      historyList.innerHTML = sessions.length === 0
+        ? '<li style="color:var(--text-muted);">No saved meetings yet. Run an attendance check and click "Save to History".</li>'
+        : sessions.map(function(s) {
+            return '<li>' +
+              '<div>' +
+                '<strong>' + s.label + '</strong>' +
+                '<div style="font-size:0.8rem;color:var(--text-muted);">Present: ' + (s.presentEmails || []).length + ' • Missing: ' + (s.missingEmails || []).length + '</div>' +
+              '</div>' +
+              '<span class="badge badge-ok">' + s.rate + '</span>' +
+            '</li>';
+          }).join('');
+    }
+
+    function handleExportFullAudit() {
+      var rows = [['Student Name', 'Email', 'Excused Status', 'Total Saved Absences']];
+      var sessions = clubData.sessions || [];
+      clubData.members.forEach(function(m) {
+        var missed = sessions.filter(function(s) {
+          return (s.missingEmails || []).indexOf(m.email) !== -1;
+        }).length;
+        rows.push([m.name, m.email, m.excused ? 'Excused' : 'Active', missed]);
+      });
+      downloadCsv(rows, clubData.clubName.replace(/\s+/g, '_') + '_Semester_Audit.csv');
+    }
+
+    function populateSettingsForm() {
+      document.getElementById('settingsClubName').value = clubData.clubName || '';
+      document.getElementById('settingsAdvisorName').value = clubData.advisorName || '';
+      document.getElementById('settingsEmailSubject').value = (clubData.emailTemplate && clubData.emailTemplate.subject) || '';
+      document.getElementById('settingsEmailBody').value = (clubData.emailTemplate && clubData.emailTemplate.body) || '';
+    }
+
+    async function handleSaveEmailSettings() {
+      clubData.clubName = document.getElementById('settingsClubName').value.trim() || clubData.clubName;
+      clubData.advisorName = document.getElementById('settingsAdvisorName').value.trim() || 'Club Advisor';
+      clubData.emailTemplate = {
+        subject: document.getElementById('settingsEmailSubject').value,
+        body: document.getElementById('settingsEmailBody').value
+      };
+      await saveClubDataToFirestore();
+      document.getElementById('clubTitleDisplay').textContent = clubData.clubName;
+      alert('Custom email prompt & club details saved!');
+    }
+
+    async function handleFerpaReset() {
+      if (!confirm('Are you sure? This permanently deletes all student names, emails, and attendance history for FERPA compliance.')) return;
+      clubData.members = [];
+      clubData.sessions = [];
+      await saveClubDataToFirestore();
+      location.reload();
+    }
+
+    function formatTemplateText(templateStr) {
+      var todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return templateStr
+        .replace(/\{ClubName\}/g, clubData.clubName || 'Club')
+        .replace(/\{AdvisorName\}/g, clubData.advisorName || 'Club Advisor')
+        .replace(/\{Date\}/g, todayStr);
+    }
+
+    function openEmailModal() {
+      var checklistContainer = document.getElementById('modalChecklist');
+      checklistContainer.innerHTML = '';
+
+      currentMissingMembers.forEach(function(member, idx) {
+        var div = document.createElement('label');
+        div.className = 'checkbox-item';
+        div.innerHTML =
+          '<input type="checkbox" value="' + member.email + '" id="chk_' + idx + '" checked>' +
+          '<div>' +
+            '<strong style="color: var(--text-dark);">' + member.name + '</strong>' +
+            '<div style="font-size: 0.8rem; color: var(--text-muted);">' + member.email + '</div>' +
+          '</div>';
+        checklistContainer.appendChild(div);
+      });
+
+      document.getElementById('modalEmailPreview').value = formatTemplateText(clubData.emailTemplate.body);
+      document.getElementById('emailModal').style.display = 'flex';
+    }
+
+    function closeEmailModal() {
+      document.getElementById('emailModal').style.display = 'none';
+    }
+
+    function handleSendEmail() {
+      var checkboxes = document.querySelectorAll('#modalChecklist input[type="checkbox"]:checked');
+      var selectedEmails = Array.from(checkboxes).map(function(cb) { return cb.value; });
+      if (selectedEmails.length === 0) {
+        alert('Please select at least one student to email.');
+        return;
+      }
+
+      var bccString = selectedEmails.join(',');
+      var subject = encodeURIComponent(formatTemplateText(clubData.emailTemplate.subject));
+      var body = encodeURIComponent(document.getElementById('modalEmailPreview').value);
+
+      var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&bcc=' + bccString + '&su=' + subject + '&body=' + body;
+      window.open(gmailUrl, '_blank');
+      document.getElementById('emailModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
